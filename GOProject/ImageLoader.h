@@ -1,6 +1,7 @@
 #ifndef _HEADER_IMAGE_LOADER
 #define _HEADER_IMAGE_LOADER
 
+#include <opencv2/imgproc/imgproc.hpp>
 #include "Image.h"
 
 namespace GOProject
