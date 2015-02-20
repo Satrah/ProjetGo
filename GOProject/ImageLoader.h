@@ -19,14 +19,23 @@ namespace GOProject
 		inline bool Load(Image<uchar> image) { _loadedImage = image; return Loaded(); }
 		inline bool Loaded() const { return _loadedImage.data != NULL; }
 		void Detect();
-		void DetectLinesHough();
-		void DisplayHoughLines(const char* winName = "hough lines") const;
+		// Hough lines
+		void DetectLinesHough(int threshold = 50, int minLineLength = 50, int maxLineGap = 10);
+		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
+		void BuildHoughLinesHistogram();
+		void DisplayHoughLinesOrientation(const char* winName = "hough lines orig") const;
+		void FilterHoughLines(int nIterations = 100);
+		void DisplayTransformedImage() const;
 
 		void DebugDisplay();
 		inline Image<uchar> GetImage() const { return _loadedImage; }
+
+		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
 	protected:
 		Image<uchar> _loadedImage;
 		std::vector<cv::Vec4i> _houghLines;
+		double _houghLinesOrigHistogram[HOUGH_LINES_HISTO_ORIG_COUNT];
+		double _houghLinesMaxDirection;
 	};
 };
 

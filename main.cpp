@@ -19,6 +19,9 @@ int main()
 
 void TestHoughLinesFromWebcam()
 {
+	int minLineLength = 50;
+	int maxLineGap = 20;
+	int houghTreshold = 50;
 	VideoCapture cap;
 	cap.open(0);
 	Mat webcam;
@@ -34,8 +37,15 @@ void TestHoughLinesFromWebcam()
 
 		GOProject::ImageLoader loader;
 		loader.Load(webcamGrey);
-		loader.DetectLinesHough();
-		loader.DisplayHoughLines("Hough");
+		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
+		loader.BuildHoughLinesHistogram();
+		loader.FilterHoughLines();
+		Image<uchar> blah = loader.DisplayHoughLines("Hough");
+		loader.DisplayHoughLinesOrientation();
+		loader.DisplayTransformedImage();
+		createTrackbar("min line length", "Hough", &minLineLength, 100);
+		createTrackbar("max gap", "Hough", &maxLineGap, 100);
+		createTrackbar("max gaphoughTreshold", "Hough", &houghTreshold, 150);
 	}
 
 	waitKey();
