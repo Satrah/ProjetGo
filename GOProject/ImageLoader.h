@@ -10,7 +10,11 @@ namespace GOProject
 	{
 	public:
 		ImageLoader() {}
+
 		bool Load(const char* imageFile);
+		inline bool Loaded() const { return _loadedImage.data != NULL; }
+		void Detect();
+
 		void DebugDisplay();
 	protected:
 		Image<uchar> _loadedImage;

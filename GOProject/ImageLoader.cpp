@@ -1,4 +1,7 @@
+#include <cassert>
+
 #include <opencv2/highgui/highgui.hpp>
+
 #include "ImageLoader.h"
 
 using namespace cv;
@@ -10,6 +13,10 @@ bool ImageLoader::Load(const char* filename)
 	return _loadedImage.data != NULL;
 }
 
+void ImageLoader::Detect()
+{
+	assert(Loaded());
+}
 void ImageLoader::DebugDisplay()
 {
 	imshow("GO Image Loader display", _loadedImage);
