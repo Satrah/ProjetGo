@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -27,6 +28,7 @@ void TestHoughLinesFromWebcam()
 	Mat webcam;
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
+	time_t lastCompute = time(NULL);
 	while (waitKey(1) != 'q')
 	{
 		cap >> webcam;
@@ -39,9 +41,14 @@ void TestHoughLinesFromWebcam()
 		loader.Load(webcamGrey);
 		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
 		loader.BuildHoughLinesHistogram();
-		loader.FilterHoughLines();
-		Image<uchar> blah = loader.DisplayHoughLines("Hough");
 		loader.DisplayHoughLinesOrientation();
+		Image<uchar> blah = loader.DisplayHoughLines("Hough");
+		if (lastCompute+3 < time(NULL))
+		{
+			printf("Refresh Hough lines computation\n");
+			lastCompute = time(NULL);
+			loader.FilterHoughLines();
+		}
 		loader.DisplayTransformedImage();
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);

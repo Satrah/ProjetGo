@@ -10,6 +10,7 @@
 
 namespace GOProject
 {
+	typedef std::vector<cv::Vec4i> LinesVec;
 	class ImageLoader
 	{
 	public:
@@ -24,7 +25,7 @@ namespace GOProject
 		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
 		void BuildHoughLinesHistogram();
 		void DisplayHoughLinesOrientation(const char* winName = "hough lines orig") const;
-		void FilterHoughLines(int nIterations = 100);
+		void FilterHoughLines(int nIterations = 1000, int nSuccessfullIterations = 10);
 		void DisplayTransformedImage() const;
 
 		void DebugDisplay();
@@ -33,7 +34,8 @@ namespace GOProject
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
 	protected:
 		Image<uchar> _loadedImage;
-		std::vector<cv::Vec4i> _houghLines;
+		LinesVec _houghLines;
+		cv::Mat _homography;
 		double _houghLinesOrigHistogram[HOUGH_LINES_HISTO_ORIG_COUNT];
 		double _houghLinesMaxDirection;
 	};
