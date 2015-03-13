@@ -127,10 +127,10 @@ inline void transformLinesAndNormalize(LinesVec const& lines, std::vector<Vec2f>
 		out.push_back(transformVectorAndNormalize(*it, H));
 }
 
-void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
+void ImageLoader::FilterVerticalLines()
 {
-	LinesVec verticalLines;
-	LinesVec horizontalLines;
+	_verticalLines.clear();
+	_horizontalLines.clear();
 	for (size_t i = 0; i < _houghLines.size(); i++)
 	{
 		Vec4i& l = _houghLines[i];
@@ -138,15 +138,18 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 		angle += CV_PI / 2;
 		angle = fmod(angle - _houghLinesMaxDirection, CV_PI);
 		if (fabs(angle) < CV_PI / 4 || fabs(angle - CV_PI) < CV_PI / 4)
-			verticalLines.push_back(l);
+			_verticalLines.push_back(l);
 		else
-			horizontalLines.push_back(l);
+			_horizontalLines.push_back(l);
 	}
-	if (!verticalLines.size() || !horizontalLines.size())
+}
+void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations)
+{
+	if (!_verticalLines.size() || !_horizontalLines.size())
 	{
-		if (!verticalLines.size())
+		if (!_verticalLines.size())
 			printf("/!\ No vertical lines!\n");
-		if (!horizontalLines.size())
+		if (!_horizontalLines.size())
 			printf("/!\ No horizontal lines!\n");
 		return;
 	}
@@ -155,10 +158,10 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 	for (int i = 0; i < nIterations || successFullIterations < nSuccessfullIterations; ++i)
 	{
 		/// First, try to compute a random homography from 4 lines
-		Vec4i& randomVertical = verticalLines[rand() % verticalLines.size()];
-		Vec4i& randomVertical2 = verticalLines[rand() % verticalLines.size()];
-		Vec4i& randomHorizontal = horizontalLines[rand() % horizontalLines.size()];
-		Vec4i& randomHorizontal2 = horizontalLines[rand() % horizontalLines.size()];
+		Vec4i& randomVertical = _verticalLines[rand() % _verticalLines.size()];
+		Vec4i& randomVertical2 = _verticalLines[rand() % _verticalLines.size()];
+		Vec4i& randomHorizontal = _horizontalLines[rand() % _horizontalLines.size()];
+		Vec4i& randomHorizontal2 = _horizontalLines[rand() % _horizontalLines.size()];
 		std::vector<Point2f> points1;
 		if (!AppendIntersec(randomVertical, randomHorizontal, points1) ||
 			!AppendIntersec(randomVertical2, randomHorizontal, points1) ||
@@ -167,8 +170,8 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			continue;
 
 		std::vector<Point2f> points2;
-		const float COORD_BASIS = 100;
-		const float SCALE = 100;
+		const float COORD_BASIS = points1[0].x;
+		const float SCALE = sqrt((points1[0] - points1[1]).dot(points1[0] - points1[1]));
 		points2.push_back(Point2f(COORD_BASIS, COORD_BASIS));
 		points2.push_back(Point2f(COORD_BASIS + SCALE, COORD_BASIS));
 		points2.push_back(Point2f(COORD_BASIS, COORD_BASIS + SCALE));
@@ -179,18 +182,18 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 		int currentScore = 0;
 		/* First method: exhaustive check O(n²)
 		std::vector<Vec2f> vertTransform;
-		transformLinesAndNormalize(verticalLines, vertTransform, H);
+		transformLinesAndNormalize(_verticalLines, vertTransform, H);
 		std::vector<Vec2f> horizontalTransform;
-		transformLinesAndNormalize(horizontalLines, horizontalTransform, H);
+		transformLinesAndNormalize(_horizontalLines, horizontalTransform, H);
 		for (std::vector<Vec2f>::const_iterator vert = vertTransform.begin(); vert != vertTransform.end(); ++vert)
 			for (std::vector<Vec2f>::const_iterator horiz = horizontalTransform.begin(); horiz != horizontalTransform.end(); ++horiz)
 				if (fabs(vert->dot(*horiz)) < 0.1f)
 					++currentScore;
 		/* Second */
 		std::vector<Vec2f> vertTransform;
-		transformLinesAndNormalize(verticalLines, vertTransform, H);
+		transformLinesAndNormalize(_verticalLines, vertTransform, H);
 		std::vector<Vec2f> horizontalTransform;
-		transformLinesAndNormalize(horizontalLines, horizontalTransform, H);
+		transformLinesAndNormalize(_horizontalLines, horizontalTransform, H);
 		for (std::vector<Vec2f>::const_iterator vert = vertTransform.begin(); vert != vertTransform.end(); ++vert)
 			if (fabs((*vert)[0]) < 0.1f)
 				++currentScore;
@@ -200,8 +203,8 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 		/* Third possible method: monte carlo.
 		for (int i = 0; i < 50; ++i)
 		{
-			Vec2f vert = transformVectorAndNormalize(verticalLines[rand() % verticalLines.size()], H);
-			Vec2f horiz = transformVectorAndNormalize(horizontalLines[rand() % horizontalLines.size()], H);
+			Vec2f vert = transformVectorAndNormalize(_verticalLines[rand() % _verticalLines.size()], H);
+			Vec2f horiz = transformVectorAndNormalize(_horizontalLines[rand() % _horizontalLines.size()], H);
 			double scalarProd = vert.dot(horiz);
 			if (fabs(scalarProd) < 0.1f)
 				++currentScore;
@@ -239,6 +242,10 @@ void ImageLoader::DisplayHoughLinesOrientation(const char* winName) const
 		line(histogram, Point(i*histogramLineWidth, 0), Point(i*histogramLineWidth, count), Scalar(0, 0, 255), histogramLineWidth, CV_AA);
 	}
 	imshow(winName, histogram);
+}
+
+void ImageLoader::ClearBadLines()
+{
 }
 
 void ImageLoader::DebugDisplay()

@@ -25,7 +25,9 @@ namespace GOProject
 		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
 		void BuildHoughLinesHistogram();
 		void DisplayHoughLinesOrientation(const char* winName = "hough lines orig") const;
-		void FilterHoughLines(int nIterations = 1000, int nSuccessfullIterations = 250);
+		void FilterVerticalLines();
+		void FindBestHomography(int nIterations = 1000, int nSuccessfullIterations = 250);
+		void ClearBadLines();
 		void DisplayTransformedImage() const;
 
 		void DebugDisplay();
@@ -34,6 +36,8 @@ namespace GOProject
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
 	protected:
 		Image<uchar> _loadedImage;
+		LinesVec _verticalLines;
+		LinesVec _horizontalLines;
 		LinesVec _houghLines;
 		cv::Mat _homography;
 		double _houghLinesOrigHistogram[HOUGH_LINES_HISTO_ORIG_COUNT];
