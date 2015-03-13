@@ -185,10 +185,10 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 		std::vector<Vec2f> horizontalTransform;
 		transformLinesAndNormalize(horizontalLines, horizontalTransform, H);
 		for (std::vector<Vec2f>::const_iterator vert = vertTransform.begin(); vert != vertTransform.end(); ++vert)
-			if (fabs((*vert)[1]) < 0.1f)
+			if (fabs((*vert)[0]) < 0.1f)
 				++currentScore;
 		for (std::vector<Vec2f>::const_iterator horiz = horizontalTransform.begin(); horiz != horizontalTransform.end(); ++horiz)
-			if (fabs((*horiz)[0]) < 0.1f)
+			if (fabs((*horiz)[1]) < 0.1f)
 				++currentScore;
 		/* Third possible method: monte carlo.
 		for (int i = 0; i < 50; ++i)
