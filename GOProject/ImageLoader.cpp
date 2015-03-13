@@ -54,7 +54,7 @@ void ImageLoader::BuildHoughLinesHistogram()
 	for (size_t i = 0; i < _houghLines.size(); i++)
 	{
 		Vec4i l = _houghLines[i];
-		double angle = atan(float(l[2] - l[0]) / (l[3] - l[1]));
+		double angle = atan(double(l[2] - l[0]) / (l[3] - l[1]));
 		angle += CV_PI / 2;
 		int idx = int(floor(angle / CV_PI * HOUGH_LINES_HISTO_ORIG_COUNT));
 		if (idx >= HOUGH_LINES_HISTO_ORIG_COUNT)
@@ -135,6 +135,7 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 	{
 		Vec4i& l = _houghLines[i];
 		double angle = atan(double(l[2] - l[0]) / (l[3] - l[1]));
+		angle += CV_PI / 2;
 		angle = fmod(angle - _houghLinesMaxDirection, CV_PI);
 		if (fabs(angle) < CV_PI / 4 || fabs(angle - CV_PI) < CV_PI / 4)
 			verticalLines.push_back(l);
@@ -142,7 +143,13 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			horizontalLines.push_back(l);
 	}
 	if (!verticalLines.size() || !horizontalLines.size())
+	{
+		if (!verticalLines.size())
+			printf("/!\ No vertical lines!\n");
+		if (!horizontalLines.size())
+			printf("/!\ No horizontal lines!\n");
 		return;
+	}
 	int bestHscore = 0;
 	int successFullIterations = 0;
 	for (int i = 0; i < nIterations || successFullIterations < nSuccessfullIterations; ++i)
@@ -158,6 +165,7 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			!AppendIntersec(randomVertical, randomHorizontal2, points1) ||
 			!AppendIntersec(randomVertical2, randomHorizontal2, points1))
 			continue;
+
 		std::vector<Point2f> points2;
 		const float COORD_BASIS = 100;
 		const float SCALE = 100;
@@ -167,7 +175,7 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 		points2.push_back(Point2f(COORD_BASIS + SCALE, COORD_BASIS + SCALE));
 		Mat H = findHomography(points1, points2, CV_RANSAC);
 		++successFullIterations;
-		// Now, calculate the score of this homography: Other lines should also be normal.
+		// Now, calculate the score of this homography.
 		int currentScore = 0;
 		/* First method: exhaustive check O(n²)
 		std::vector<Vec2f> vertTransform;
@@ -178,7 +186,6 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			for (std::vector<Vec2f>::const_iterator horiz = horizontalTransform.begin(); horiz != horizontalTransform.end(); ++horiz)
 				if (fabs(vert->dot(*horiz)) < 0.1f)
 					++currentScore;
-					*/
 		/* Second */
 		std::vector<Vec2f> vertTransform;
 		transformLinesAndNormalize(verticalLines, vertTransform, H);
@@ -205,6 +212,8 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			_homography = H;
 		}
 	}
+	if (!bestHscore)
+		printf("/!\ No homography found!\n");
 }
 
 void ImageLoader::DisplayTransformedImage() const
@@ -221,6 +230,8 @@ void ImageLoader::DisplayHoughLinesOrientation(const char* winName) const
 	const int histogramLineWidth = 10;
 	const int heighPrecision = 100;
 	Image<uchar> histogram(HOUGH_LINES_HISTO_ORIG_COUNT*histogramLineWidth, heighPrecision, CV_8UC1);
+	for (uchar* i = histogram.datastart; i < histogram.dataend; ++i)
+		*i = 255;
 	// Display results
 	for (size_t i = 0; i < HOUGH_LINES_HISTO_ORIG_COUNT; i++)
 	{

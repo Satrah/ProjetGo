@@ -25,7 +25,7 @@ namespace GOProject
 		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
 		void BuildHoughLinesHistogram();
 		void DisplayHoughLinesOrientation(const char* winName = "hough lines orig") const;
-		void FilterHoughLines(int nIterations = 1000, int nSuccessfullIterations = 10);
+		void FilterHoughLines(int nIterations = 1000, int nSuccessfullIterations = 250);
 		void DisplayTransformedImage() const;
 
 		void DebugDisplay();
