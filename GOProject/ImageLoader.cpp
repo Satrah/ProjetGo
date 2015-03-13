@@ -31,20 +31,6 @@ void ImageLoader::DetectLinesHough(int threshold, int minLineLength, int maxLine
 	HoughLinesP(dst, _houghLines, 1, CV_PI / 100, threshold, minLineLength, maxLineGap);
 }
 
-Image<uchar> ImageLoader::DisplayHoughLines(const char* winName) const
-{
-	Image<uchar> cdst(GetImage().width(), GetImage().height(), CV_8UC1);
-	for (uchar* i = cdst.datastart; i < cdst.dataend; ++i)
-		*i = 255;
-	for (size_t i = 0; i < _houghLines.size(); ++i)
-	{
-		Vec4i l = _houghLines[i];
-		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
-	}
-	imshow(winName, cdst);
-	return cdst;
-}
-
 void ImageLoader::BuildHoughLinesHistogram()
 {
 	for (int i = 0; i < HOUGH_LINES_HISTO_ORIG_COUNT; ++i)
@@ -219,6 +205,34 @@ void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations
 		printf("/!\ No homography found!\n");
 }
 
+void ImageLoader::ClearBadLines()
+{
+	std::vector<Vec2f> vertTransform;
+	transformLinesAndNormalize(_verticalLines, vertTransform, _homography);
+	std::vector<Vec2f> horizontalTransform;
+	transformLinesAndNormalize(_horizontalLines, horizontalTransform, _homography);
+	int shift = 0;
+	for (size_t i = 0; i < vertTransform.size(); ++i)
+		if (fabs(vertTransform[i][0]) > 0.04f)
+		{
+			_verticalLines.erase(_verticalLines.begin() + i - shift);
+			++shift;
+		}
+	shift = 0;
+	for (size_t i = 0; i < horizontalTransform.size(); ++i)
+		if (fabs(horizontalTransform[i][1]) > 0.04f)
+		{
+			_horizontalLines.erase(_horizontalLines.begin() + i - shift);
+			++shift;
+		}
+}
+
+void ImageLoader::DebugDisplay()
+{
+	imshow("GO Image Loader display", _loadedImage);
+	waitKey();
+}
+
 void ImageLoader::DisplayTransformedImage() const
 {
 	if (_homography.empty())
@@ -244,12 +258,34 @@ void ImageLoader::DisplayHoughLinesOrientation(const char* winName) const
 	imshow(winName, histogram);
 }
 
-void ImageLoader::ClearBadLines()
+Image<uchar> ImageLoader::DisplayHoughLines(const char* winName) const
 {
+	Image<uchar> cdst(GetImage().width(), GetImage().height(), CV_8UC1);
+	for (uchar* i = cdst.datastart; i < cdst.dataend; ++i)
+		*i = 255;
+	for (size_t i = 0; i < _houghLines.size(); ++i)
+	{
+		Vec4i l = _houghLines[i];
+		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+	}
+	imshow(winName, cdst);
+	return cdst;
 }
 
-void ImageLoader::DebugDisplay()
+void ImageLoader::DisplayVerticalAndHorizontalLines(const char* winName)
 {
-	imshow("GO Image Loader display", _loadedImage);
-	waitKey();
+	Mat cdst(GetImage().height(), GetImage().width(), CV_8UC3);
+	for (uchar* i = cdst.datastart; i < cdst.dataend; ++i)
+		*i = 0;
+	for (size_t i = 0; i < _verticalLines.size(); ++i)
+	{
+		Vec4i l = _verticalLines[i];
+		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+	}
+	for (size_t i = 0; i < _horizontalLines.size(); ++i)
+	{
+		Vec4i l = _horizontalLines[i];
+		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 255, 0), 1, CV_AA);
+	}
+	imshow(winName, cdst);
 }

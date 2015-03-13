@@ -40,12 +40,13 @@ void TestHoughLinesFromWebcam()
 		loader.Load(webcamGrey);
 		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
 		loader.BuildHoughLinesHistogram();
-		loader.DisplayHoughLinesOrientation();
-		loader.DisplayHoughLines("Hough");
+		//loader.DisplayHoughLinesOrientation();
+		//loader.DisplayHoughLines("Hough");
 		loader.FilterVerticalLines();
 		loader.FindBestHomography();
+		//loader.DisplayTransformedImage();
 		loader.ClearBadLines();
-		loader.DisplayTransformedImage();
+		loader.DisplayVerticalAndHorizontalLines("HoughCleared");
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);
 		createTrackbar("max gaphoughTreshold", "Hough", &houghTreshold, 150);

@@ -23,6 +23,7 @@ namespace GOProject
 		// Hough lines
 		void DetectLinesHough(int threshold = 50, int minLineLength = 50, int maxLineGap = 10);
 		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
+		void DisplayVerticalAndHorizontalLines(const char* winName = "hough lines cleared");
 		void BuildHoughLinesHistogram();
 		void DisplayHoughLinesOrientation(const char* winName = "hough lines orig") const;
 		void FilterVerticalLines();
