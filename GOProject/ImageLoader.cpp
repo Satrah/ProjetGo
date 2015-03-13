@@ -33,9 +33,10 @@ void ImageLoader::DetectLinesHough(int threshold, int minLineLength, int maxLine
 
 Image<uchar> ImageLoader::DisplayHoughLines(const char* winName) const
 {
-	//Image<uchar> cdst = GetImage();
 	Image<uchar> cdst(GetImage().width(), GetImage().height(), CV_8UC1);
-	for (size_t i = 0; i < _houghLines.size(); i++)
+	for (uchar* i = cdst.datastart; i < cdst.dataend; ++i)
+		*i = 255;
+	for (size_t i = 0; i < _houghLines.size(); ++i)
 	{
 		Vec4i l = _houghLines[i];
 		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
@@ -133,7 +134,7 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 	for (size_t i = 0; i < _houghLines.size(); i++)
 	{
 		Vec4i& l = _houghLines[i];
-		float angle = atan(float(l[2] - l[0]) / (l[3] - l[1]));
+		double angle = atan(double(l[2] - l[0]) / (l[3] - l[1]));
 		angle = fmod(angle - _houghLinesMaxDirection, CV_PI);
 		if (fabs(angle) < CV_PI / 4 || fabs(angle - CV_PI) < CV_PI / 4)
 			verticalLines.push_back(l);
@@ -158,7 +159,7 @@ void ImageLoader::FilterHoughLines(int nIterations, int nSuccessfullIterations)
 			!AppendIntersec(randomVertical2, randomHorizontal2, points1))
 			continue;
 		std::vector<Point2f> points2;
-		const unsigned int COORD_BASIS = 100;
+		const float COORD_BASIS = 100;
 		const float SCALE = 100;
 		points2.push_back(Point2f(COORD_BASIS, COORD_BASIS));
 		points2.push_back(Point2f(COORD_BASIS + SCALE, COORD_BASIS));

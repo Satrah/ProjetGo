@@ -29,6 +29,7 @@ void TestHoughLinesFromWebcam()
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
 	time_t lastCompute = time(NULL);
+	GOProject::ImageLoader loader;
 	while (waitKey(1) != 'q')
 	{
 		cap >> webcam;
@@ -37,12 +38,11 @@ void TestHoughLinesFromWebcam()
 
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
-		GOProject::ImageLoader loader;
 		loader.Load(webcamGrey);
 		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
 		loader.BuildHoughLinesHistogram();
 		loader.DisplayHoughLinesOrientation();
-		Image<uchar> blah = loader.DisplayHoughLines("Hough");
+		loader.DisplayHoughLines("Hough");
 		if (lastCompute+3 < time(NULL))
 		{
 			printf("Refresh Hough lines computation\n");
