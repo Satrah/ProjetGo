@@ -10,7 +10,7 @@ namespace GOProject
 	class Image : public cv::Mat {
 	public:
 		// Constructors
-		Image() {}
+		Image(): cv::Mat() {}
 		Image(const cv::Mat& A):cv::Mat(A) {}
 		Image(int w,int h,int type):cv::Mat(h,w,type) {}
 		// Accessors
