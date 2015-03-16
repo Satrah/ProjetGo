@@ -48,6 +48,7 @@ namespace GOProject
 		cv::Mat _homography;
 		double _houghLinesOrigHistogram[HOUGH_LINES_HISTO_ORIG_COUNT];
 		double _houghLinesMaxDirection;
+		double _rectangleOrientation;
 
 		std::vector<cv::RotatedRect> _detectedRectangles;
 		cv::RotatedRect _globalRectangle;

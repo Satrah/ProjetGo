@@ -313,6 +313,7 @@ void ImageLoader::DetectSquareForms()
 
 	// Find at the same time the square median area
 	vector<double> squareAreas;
+	vector<double> squareOrientation;
 	for (int i = 0; i < contours.size(); i++)
 	{
 		RotatedRect rec = minAreaRect(Mat(contours[i]));
@@ -338,7 +339,17 @@ void ImageLoader::DetectSquareForms()
 		if (fabs((area - median) / median) > 0.2f)
 			_detectedRectangles.erase(_detectedRectangles.begin() + i);
 		else
+		{
+			squareOrientation.push_back(_detectedRectangles[i].angle);
 			++i;
+		}
+	}
+	if (!squareOrientation.empty())
+	{
+		sort(squareOrientation.begin(), squareOrientation.end());
+		_rectangleOrientation = squareOrientation[squareOrientation.size() / 2];
+		// Deg to rad
+		_rectangleOrientation = _rectangleOrientation * CV_PI / 180;
 	}
 }
 
@@ -366,22 +377,18 @@ void ImageLoader::DebugDisplaySquares() const
 
 void ImageLoader::DetectCorner()
 {
-	int maxScore = 0;
+	int maxScore = -1;
 	for (int i = 0; i < _detectedRectangles.size(); ++i)
-	for (int j = i + 1; j < _detectedRectangles.size(); ++j)
-	for (int k = j + 1; k < _detectedRectangles.size(); ++k)
+		for (int j = 0; j < _detectedRectangles.size(); ++j)
 		{
-			vector<Point> rectPoints;
-			Rect rect = _detectedRectangles[i].boundingRect();
-			rectPoints.push_back(rect.tl());
-			rectPoints.push_back(rect.br());
-			rect = _detectedRectangles[j].boundingRect();
-			rectPoints.push_back(rect.tl());
-			rectPoints.push_back(rect.br());
-			rect = _detectedRectangles[k].boundingRect();
-			rectPoints.push_back(rect.tl());
-			rectPoints.push_back(rect.br());
-			RotatedRect rec = minAreaRect(Mat(rectPoints));
+			Point2f pointsRectI[4], pointsRectJ[4];
+			_detectedRectangles[i].points(pointsRectI);
+			_detectedRectangles[j].points(pointsRectJ);
+			Point2f a = pointsRectI[0];
+			Point2f b = pointsRectJ[3];
+			double rectSizeX = (a - b).dot(Point2f(cos(_rectangleOrientation), sin(_rectangleOrientation)));
+			double rectSizeY = (a - b).dot(Point2f(sin(_rectangleOrientation), cos(_rectangleOrientation)));
+			RotatedRect rec = RotatedRect((a + b) * 0.5, Size(fabs(rectSizeX), fabs(rectSizeY)), _rectangleOrientation * 180 / CV_PI);
 			Point2f contour[4];
 			rec.points(contour);
 			std::vector<Point> contourVec;
@@ -395,10 +402,12 @@ void ImageLoader::DetectCorner()
 				if (ret > 0)
 					++insideCount;
 			}
+			//insideCount *= 1 / (fabs(rec.angle - _rectangleOrientation) + 1);
 			if (insideCount > maxScore)
 			{
 				_globalRectangle = rec;
 				maxScore = insideCount;
 			}
 		}
+		printf("Final rec with score %u  orig=%f\n", maxScore, _rectangleOrientation);
 }
