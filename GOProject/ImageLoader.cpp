@@ -292,7 +292,7 @@ void ImageLoader::DisplayVerticalAndHorizontalLines(const char* winName)
 }
 
 
-void ImageLoader::DebugDetectSimpleForms() const
+void ImageLoader::DebugDetectSquaresForms() const
 {
 	Mat threshold_output;
 	vector<vector<Point> > contours;
@@ -305,48 +305,43 @@ void ImageLoader::DebugDetectSimpleForms() const
 
 	/// Find the rotated rectangles and ellipses for each contour
 	vector<RotatedRect> minRect(contours.size());
-	vector<RotatedRect> minEllipse(contours.size());
 
+	// Find at the same time the square median area
+	vector<double> squareAreas;
 	for (int i = 0; i < contours.size(); i++)
 	{
-		// Filter out too small contours.
-		vector<Point>& current = contours[i];
-		int maxX, minX, maxY, minY;
-		maxX = minX = current[0].x;
-		maxY = minY = current[0].y;
-		for (int j = 0; j < current.size(); ++j)
-		{
-			if (maxX < current[j].x)
-				maxX = current[j].x;
-			if (minX > current[j].x)
-				minX = current[j].x;
-			if (maxY < current[j].y)
-				maxY = current[j].y;
-			if (minY > current[j].y)
-				minY = current[j].y;
-		}
-		if ((maxX - minX)*(maxY - minY) < 20 * 20)
+		RotatedRect rec = minAreaRect(Mat(contours[i]));
+		// Filter out too small rectangles
+		double area = rec.size.area();
+		if (area < 20 * 20)
 			continue;
-		minRect[i] = minAreaRect(Mat(contours[i]));
-		if (contours[i].size() > 5)
-		{
-			minEllipse[i] = fitEllipse(Mat(contours[i]));
-		}
+		// Also remove rectangles that are not squares.
+		if (fabs((rec.size.height - rec.size.width) / (rec.size.height + rec.size.width)) > 0.2f)
+			continue;
+		squareAreas.push_back(area);
+		minRect[i] = rec;
 	}
-
-
+	if (minRect.empty())
+		return;
+	// Filter our squares not in the median area
+	// TODO: Do that in a linear time
+	sort(squareAreas.begin(), squareAreas.end());
+	double median = squareAreas[squareAreas.size() / 2];
+	for (int i = 0; i < minRect.size();)
+	{
+		double area = minRect[i].size.area();
+		if (fabs((area - median) / median) > 0.2f)
+			minRect.erase(minRect.begin() + i);
+		else
+			++i;
+	}
 
 	RNG rng(12345);
 	/// Draw contours + rotated rects + ellipses
 	Mat drawing = Mat::zeros(threshold_output.size(), CV_8UC3);
-	for (int i = 0; i< contours.size(); i++)
+	for (int i = 0; i < contours.size(); i++)
 	{
 		Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-		// contour
-		//drawContours(drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point());
-		// ellipse
-		//ellipse(drawing, minRect[i], color, 2, 8);
-		// rotated rectangle
 		Point2f rect_points[4]; minRect[i].points(rect_points);
 		for (int j = 0; j < 4; j++)
 			line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);

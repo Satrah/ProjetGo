@@ -30,7 +30,7 @@ namespace GOProject
 		void FindBestHomography(int nIterations = 1000, int nSuccessfullIterations = 250);
 		void ClearBadLines();
 		void DisplayTransformedImage() const;
-		void DebugDetectSimpleForms() const;
+		void DebugDetectSquaresForms() const;
 
 		inline Image<uchar> GetImage() const { return _loadedImage; }
 
