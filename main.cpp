@@ -29,7 +29,7 @@ void TestHoughLinesFromWebcam()
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
 	GOProject::ImageLoader loader;
-	while (waitKey(10) != 'q')
+	while (waitKey(1000) != 'q')
 	{
 		cap >> webcam;
 		if (webcam.empty())

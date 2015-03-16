@@ -31,7 +31,6 @@ namespace GOProject
 		void ClearBadLines();
 		void DisplayTransformedImage() const;
 
-		void DebugDisplay();
 		inline Image<uchar> GetImage() const { return _loadedImage; }
 
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;

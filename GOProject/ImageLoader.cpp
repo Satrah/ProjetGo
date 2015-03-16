@@ -96,6 +96,7 @@ inline bool AppendIntersec(Vec4i& a, Vec4i& b, std::vector<Point2f>& intersec)
 	}
 	return false;
 }
+
 inline Vec2f transformVectorAndNormalize(Vec4i point, Mat H)
 {
 	std::vector<Vec2f> orig;
@@ -104,7 +105,8 @@ inline Vec2f transformVectorAndNormalize(Vec4i point, Mat H)
 	std::vector<Vec2f> transformed = orig;
 	perspectiveTransform(orig, transformed, H);
 	Vec2f out(transformed[1][0] - transformed[0][0], transformed[1][1] - transformed[0][1]);
-	return out / sqrt(out.dot(out));
+	out /= sqrt(out.dot(out));
+	return out;
 }
 
 inline void transformLinesAndNormalize(LinesVec const& lines, std::vector<Vec2f>& out, Mat const& H)
@@ -134,9 +136,9 @@ void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations
 	if (!_verticalLines.size() || !_horizontalLines.size())
 	{
 		if (!_verticalLines.size())
-			printf("/!\ No vertical lines!\n");
+			printf("/!\\ No vertical lines!\n");
 		if (!_horizontalLines.size())
-			printf("/!\ No horizontal lines!\n");
+			printf("/!\\ No horizontal lines!\n");
 		return;
 	}
 	int bestHscore = 0;
@@ -202,7 +204,7 @@ void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations
 		}
 	}
 	if (!bestHscore)
-		printf("/!\ No homography found!\n");
+		printf("/!\\ No homography found!\n");
 }
 
 void ImageLoader::ClearBadLines()
@@ -225,12 +227,6 @@ void ImageLoader::ClearBadLines()
 			_horizontalLines.erase(_horizontalLines.begin() + i - shift);
 			++shift;
 		}
-}
-
-void ImageLoader::DebugDisplay()
-{
-	imshow("GO Image Loader display", _loadedImage);
-	waitKey();
 }
 
 void ImageLoader::DisplayTransformedImage() const
@@ -277,6 +273,11 @@ void ImageLoader::DisplayVerticalAndHorizontalLines(const char* winName)
 	Mat cdst(GetImage().height(), GetImage().width(), CV_8UC3);
 	for (uchar* i = cdst.datastart; i < cdst.dataend; ++i)
 		*i = 0;
+	for (size_t i = 0; i < _houghLines.size(); ++i)
+	{
+		Vec4i l = _houghLines[i];
+		line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(100, 100, 100), 1, CV_AA);
+	}
 	for (size_t i = 0; i < _verticalLines.size(); ++i)
 	{
 		Vec4i l = _verticalLines[i];
