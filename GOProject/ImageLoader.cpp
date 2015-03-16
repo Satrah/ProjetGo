@@ -375,7 +375,7 @@ void ImageLoader::DebugDisplaySquares() const
 	imshow("Squares", drawing);
 }
 
-void ImageLoader::DetectCorner()
+void ImageLoader::DetectBoard1()
 {
 	int maxScore = -1;
 	for (int i = 0; i < _detectedRectangles.size(); ++i)
@@ -410,4 +410,86 @@ void ImageLoader::DetectCorner()
 			}
 		}
 		printf("Final rec with score %u  orig=%f\n", maxScore, _rectangleOrientation);
+}
+
+double distanceToLine(cv::Point2f line_start, cv::Point2f line_end, cv::Point point)
+{
+	double normalLength = _hypot(line_end.x - line_start.x, line_end.y - line_start.y);
+	double distance = (double)((point.x - line_start.x) * (line_end.y - line_start.y) - (point.y - line_start.y) * (line_end.x - line_start.x)) / normalLength;
+	return distance;
+}
+
+void ImageLoader::MoveLine(Point& begin, Point2f const& direction)
+{
+	if (_detectedRectangles.empty())
+		return;
+	struct RectanglesSorter
+	{
+		Point2f lineA;
+		Point2f lineB;
+		bool operator() (RotatedRect& i, RotatedRect& j)
+		{
+			return distanceToLine(lineA, lineB, i.center) < distanceToLine(lineA, lineB, j.center);
+		}
+		inline void MovePoint(Point& point, Point2f const& direc, RotatedRect const& rect)
+		{
+			double dist = distanceToLine(lineA, lineB, rect.center);
+			point = point - Point(dist * direc);
+		}
+	};
+	Point2f lineSecondPoint = Point2f(begin) + Point2f(direction.y, -direction.x);
+	vector<RotatedRect> rectanglesList = _detectedRectangles;
+	RectanglesSorter sorter;
+	sorter.lineA = Point2f(begin);
+	sorter.lineB = lineSecondPoint;
+	std::nth_element(rectanglesList.begin(), rectanglesList.begin(), rectanglesList.end(), sorter);
+	sorter.MovePoint(begin, direction, rectanglesList[0]);
+	//printf("Pt moved to [%i %i] center is [%f %f]\n", begin.x, begin.y, rectanglesList[0].center.x, rectanglesList[0].center.y);
+}
+
+void ImageLoader::DetectBoard2()
+{
+	if (_detectedRectangles.size() <= 1)
+		return;
+	Point top, bot, left, right;
+	Point2f topToBot(float(sin(_rectangleOrientation)), -float(cos(_rectangleOrientation)));
+	Point2f leftToRight(float(cos(_rectangleOrientation)), float(sin(_rectangleOrientation)));
+	MoveLine(bot, -topToBot);
+	MoveLine(top, topToBot);
+	MoveLine(left, leftToRight);
+	MoveLine(right, -leftToRight);
+	// Find corners now
+	Point2f tf, br;
+	if (!intersection(top, Point2f(top) + leftToRight, left, Point2f(left) - topToBot, tf) ||
+		!intersection(bot, Point2f(bot) + leftToRight, right, Point2f(right) - topToBot, br))
+		return;
+	// ... And create the rectangle :)
+	_globalRectangle = RotatedRect((tf + br) * 0.5, Size(fabs((tf - br).dot(leftToRight)), fabs((tf - br).dot(topToBot))), _rectangleOrientation * 180 / CV_PI);
+	_topLeft = Point(tf);
+	_botRight = Point(br);
+	// Size of the board ?
+	_boardSize = 0;
+
+	// Debug display:
+	RNG rng(123456);
+	Mat drawing = Mat::zeros(GetImage().size(), CV_8UC3);
+	for (int i = 0; i < _detectedRectangles.size(); i++)
+	{
+		Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+		Point2f rect_points[4];
+		_detectedRectangles[i].points(rect_points);
+		for (int j = 0; j < 4; j++)
+			line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);
+		line(drawing, _detectedRectangles[i].center - 10 * topToBot, _detectedRectangles[i].center + 10 * topToBot, color, 2, 8);
+		line(drawing, _detectedRectangles[i].center - 10 * leftToRight, _detectedRectangles[i].center + 10 * leftToRight, color, 2, 8);
+	}
+	line(drawing, Point2f(top) - 1000 * leftToRight, Point2f(top) + 1000 * leftToRight, Scalar(0, 0, 120), 5, 8);
+	line(drawing, Point2f(bot) - 1000 * leftToRight, Point2f(bot) + 1000 * leftToRight, Scalar(120, 0, 120), 4, 8);
+	line(drawing, Point2f(left) - 1000 * topToBot, Point2f(left) + 1000 * topToBot, Scalar(0, 120, 120), 3, 8);
+	line(drawing, Point2f(right) - 1000 * topToBot, Point2f(right) + 1000 * topToBot, Scalar(120, 120, 120), 2, 8);
+	Point2f rect_points[4];
+	_globalRectangle.points(rect_points);
+	for (int j = 0; j < 4; j++)
+		line(drawing, rect_points[j], rect_points[(j + 1) % 4], Scalar(255, 255, 255), 1, 8);
+	imshow("Corner2", drawing);
 }

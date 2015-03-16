@@ -33,7 +33,11 @@ namespace GOProject
 		void DisplayTransformedImage() const;
 		// Rectangle detection
 		void DetectSquareForms();
-		void DetectCorner();
+		void DetectBoard1();
+		void DetectBoard2();
+	protected:
+		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
+	public:
 		void DebugDisplaySquares() const;
 
 		inline Image<uchar> GetImage() const { return _loadedImage; }
@@ -52,6 +56,9 @@ namespace GOProject
 
 		std::vector<cv::RotatedRect> _detectedRectangles;
 		cv::RotatedRect _globalRectangle;
+		Point _topLeft;
+		Point _botRight;
+		int _boardSize;
 	};
 };
 
