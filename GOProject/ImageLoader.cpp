@@ -207,6 +207,10 @@ void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations
 		printf("/!\\ No homography found!\n");
 }
 
+void ImageLoader::ApplyHomography()
+{
+	warpPerspective(GetImage(), GetImage(), _homography, GetImage().size());
+}
 void ImageLoader::ClearBadLines()
 {
 	std::vector<Vec2f> vertTransform;
@@ -292,7 +296,7 @@ void ImageLoader::DisplayVerticalAndHorizontalLines(const char* winName)
 }
 
 
-void ImageLoader::DebugDetectSquaresForms() const
+void ImageLoader::DetectSquareForms()
 {
 	Mat threshold_output;
 	vector<vector<Point> > contours;
@@ -304,7 +308,8 @@ void ImageLoader::DebugDetectSquaresForms() const
 	findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	/// Find the rotated rectangles and ellipses for each contour
-	vector<RotatedRect> minRect(contours.size());
+	_detectedRectangles.clear();
+	_detectedRectangles.reserve(contours.size());
 
 	// Find at the same time the square median area
 	vector<double> squareAreas;
@@ -319,35 +324,81 @@ void ImageLoader::DebugDetectSquaresForms() const
 		if (fabs((rec.size.height - rec.size.width) / (rec.size.height + rec.size.width)) > 0.2f)
 			continue;
 		squareAreas.push_back(area);
-		minRect[i] = rec;
+		_detectedRectangles.push_back(rec);
 	}
-	if (minRect.empty())
+	if (_detectedRectangles.empty())
 		return;
 	// Filter our squares not in the median area
 	// TODO: Do that in a linear time
 	sort(squareAreas.begin(), squareAreas.end());
 	double median = squareAreas[squareAreas.size() / 2];
-	for (int i = 0; i < minRect.size();)
+	for (int i = 0; i < _detectedRectangles.size();)
 	{
-		double area = minRect[i].size.area();
+		double area = _detectedRectangles[i].size.area();
 		if (fabs((area - median) / median) > 0.2f)
-			minRect.erase(minRect.begin() + i);
+			_detectedRectangles.erase(_detectedRectangles.begin() + i);
 		else
 			++i;
 	}
+}
 
-	RNG rng(12345);
+void ImageLoader::DebugDisplaySquares() const
+{
+	RNG rng(123456);
 	/// Draw contours + rotated rects + ellipses
-	Mat drawing = Mat::zeros(threshold_output.size(), CV_8UC3);
-	for (int i = 0; i < contours.size(); i++)
+	Mat drawing = Mat::zeros(GetImage().size(), CV_8UC3);
+	for (int i = 0; i < _detectedRectangles.size(); i++)
 	{
 		Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-		Point2f rect_points[4]; minRect[i].points(rect_points);
+		Point2f rect_points[4];
+		_detectedRectangles[i].points(rect_points);
 		for (int j = 0; j < 4; j++)
 			line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);
 	}
-
+	Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+	Point2f rect_points[4];
+	_globalRectangle.points(rect_points);
+	for (int j = 0; j < 4; j++)
+		line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 4, 8);
 	/// Show in a window
-	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	imshow("Contours", drawing);
+	imshow("Squares", drawing);
+}
+
+void ImageLoader::DetectCorner()
+{
+	int maxScore = 0;
+	for (int i = 0; i < _detectedRectangles.size(); ++i)
+	for (int j = i + 1; j < _detectedRectangles.size(); ++j)
+	for (int k = j + 1; k < _detectedRectangles.size(); ++k)
+		{
+			vector<Point> rectPoints;
+			Rect rect = _detectedRectangles[i].boundingRect();
+			rectPoints.push_back(rect.tl());
+			rectPoints.push_back(rect.br());
+			rect = _detectedRectangles[j].boundingRect();
+			rectPoints.push_back(rect.tl());
+			rectPoints.push_back(rect.br());
+			rect = _detectedRectangles[k].boundingRect();
+			rectPoints.push_back(rect.tl());
+			rectPoints.push_back(rect.br());
+			RotatedRect rec = minAreaRect(Mat(rectPoints));
+			Point2f contour[4];
+			rec.points(contour);
+			std::vector<Point> contourVec;
+			for (int l = 0; l < 4; ++l)
+				contourVec.push_back(Point(contour[l].x, contour[l].y));
+			int insideCount = 0;
+			for (int l = 0; l < _detectedRectangles.size(); ++l)
+			{
+				RotatedRect& rec2 = _detectedRectangles[l];
+				double ret = pointPolygonTest(contourVec, rec2.center, false);
+				if (ret > 0)
+					++insideCount;
+			}
+			if (insideCount > maxScore)
+			{
+				_globalRectangle = rec;
+				maxScore = insideCount;
+			}
+		}
 }

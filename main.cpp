@@ -29,7 +29,7 @@ void TestHoughLinesFromWebcam()
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
 	GOProject::ImageLoader loader;
-	while (waitKey(1000) != 'q')
+	while (waitKey(100) != 'q')
 	{
 		cap >> webcam;
 		if (webcam.empty())
@@ -47,7 +47,9 @@ void TestHoughLinesFromWebcam()
 		//loader.DisplayTransformedImage();
 		//loader.ClearBadLines();
 		//loader.DisplayVerticalAndHorizontalLines("HoughCleared");
-		loader.DebugDetectSquaresForms();
+		loader.DetectSquareForms();
+		loader.DetectCorner();
+		loader.DebugDisplaySquares();
 
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);
