@@ -35,6 +35,7 @@ namespace GOProject
 		void DetectSquareForms();
 		void DetectBoard1();
 		void DetectBoard2();
+		void TrackFeaturesInsideBoard();
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
 	public:
@@ -43,6 +44,9 @@ namespace GOProject
 		inline Image<uchar> GetImage() const { return _loadedImage; }
 
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
+		static const int TRACKING_NUM_POINTS = 15;
+		static const double TRACKING_QUALITY;
+		static const double TRACKING_MIN_DIST;
 	protected:
 		Image<uchar> _loadedImage;
 

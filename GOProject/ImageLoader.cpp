@@ -6,9 +6,13 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include "ImageLoader.h"
+#include "Utils.h"
 
 using namespace cv;
 using namespace GOProject;
+
+const double ImageLoader::TRACKING_QUALITY = 0.01;
+const double ImageLoader::TRACKING_MIN_DIST = 20;
 
 bool ImageLoader::Load(const char* filename)
 {
@@ -492,4 +496,29 @@ void ImageLoader::DetectBoard2()
 	for (int j = 0; j < 4; j++)
 		line(drawing, rect_points[j], rect_points[(j + 1) % 4], Scalar(255, 255, 255), 1, 8);
 	imshow("Corner2", drawing);
+}
+
+
+void ImageLoader::TrackFeaturesInsideBoard()
+{
+	// Calculate mask
+	Image<uchar> mask = Mat::zeros(_loadedImage.size(), CV_8UC1);
+	for (auto& rect : _detectedRectangles)
+	{
+		Rect br = rect.boundingRect();
+		for (int x = 0; x < br.width; ++x)
+		for (int y = 0; y < br.height; ++y)
+			mask(x, y) = 1;
+	}
+	// Prepare image
+	Image<uchar> imageForTracking = _loadedImage.clone();
+	equalizeHist(_loadedImage, imageForTracking, mask);
+	// Detect what we should track
+	vector <Point2f> corners;
+	goodFeaturesToTrack(imageForTracking, corners, TRACKING_NUM_POINTS, TRACKING_QUALITY, TRACKING_MIN_DIST, mask, 3, true);
+	// Debug display
+	Image<uchar> displayDebug = imageForTracking.clone();
+	for (auto& point : corners)
+		circle(displayDebug, point, 5, Scalar(100));
+	imshow("Tracking", displayDebug);
 }
