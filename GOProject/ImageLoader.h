@@ -56,8 +56,8 @@ namespace GOProject
 
 		std::vector<cv::RotatedRect> _detectedRectangles;
 		cv::RotatedRect _globalRectangle;
-		Point _topLeft;
-		Point _botRight;
+		cv::Point _topLeft;
+		cv::Point _botRight;
 		int _boardSize;
 	};
 };
