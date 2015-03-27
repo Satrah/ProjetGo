@@ -43,19 +43,29 @@ void TestHoughLinesFromWebcam()
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
 		loader.Load(webcamGrey);
+		loader.DetectSquareForms();
+		loader.DetectBoard2();
+
+		// Lets find an homography in the found rectange :)
+		/*
 		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
 		loader.BuildHoughLinesHistogram();
 		//loader.DisplayHoughLinesOrientation();
 		//loader.DisplayHoughLines("Hough");
 		loader.FilterVerticalLines();
 		loader.FindBestHomography();
-		//loader.DisplayTransformedImage();
-		//loader.ClearBadLines();
-		//loader.DisplayVerticalAndHorizontalLines("HoughCleared");
-		loader.DetectSquareForms();
-		loader.DetectBoard2();
+		loader.DisplayTransformedImage();
+		*/
 		loader.DetectIntersect();
-		//loader.DebugDisplaySquares();
+		if (loader.FindHomographyWithDetectedRectangles())
+		{
+			/// READ FINISHED
+
+			loader.ApplyHomography();
+			loader.DisplayTransformedImage();
+		}
+
+		loader.DebugDisplaySquares();
 
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);

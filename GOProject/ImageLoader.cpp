@@ -17,7 +17,10 @@ const double ImageLoader::TRACKING_MIN_DIST = 20;
 bool ImageLoader::Load(const char* filename)
 {
 	_loadedImage = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-	return _loadedImage.data != NULL;
+	if (!_loadedImage.data)
+		return false;
+	_globalRectangleMask = Image<uchar>(Mat::zeros(_loadedImage.size(), CV_8UC1));
+	return true;
 }
 
 void ImageLoader::Detect()
@@ -31,6 +34,10 @@ void ImageLoader::DetectLinesHough(int threshold, int minLineLength, int maxLine
 		return;
 	Image<uchar> dst;
 	Canny(GetImage(), dst, 50, 200, 3);
+	for (int i = 0; i < dst.width(); ++i)
+		for (int j = 0; j < dst.height(); ++j)
+			dst(i, j) = dst(i, j)*_globalRectangleMask(i, j);
+
 	_houghLines.clear();
 	HoughLinesP(dst, _houghLines, 1, CV_PI / 100, threshold, minLineLength, maxLineGap);
 }
@@ -479,6 +486,9 @@ void ImageLoader::DetectBoard2()
 	line(drawing, Point2f(right) - 1000 * topToBot, Point2f(right) + 1000 * topToBot, Scalar(120, 120, 120), 2, 8);
 	Point2f rect_points[4];
 	_globalRectangle.points(rect_points);
+	// Update mask
+	_globalRectangleMask = Image<uchar>(Mat::zeros(_loadedImage.size(), CV_8UC1));
+	fillRectangle(_globalRectangleMask, _globalRectangle);
 	for (int j = 0; j < 4; j++)
 		line(drawing, rect_points[j], rect_points[(j + 1) % 4], Scalar(255, 255, 255), 1, 8);
 	
@@ -488,15 +498,12 @@ void ImageLoader::DetectBoard2()
 
 void ImageLoader::TrackFeaturesInsideBoard()
 {
-	// Calculate mask
-	Image<uchar> mask = Mat::zeros(_loadedImage.size(), CV_8UC1);
-	fillRectangle(mask, _globalRectangle);
 	// Prepare image
 	Image<uchar> imageForTracking = _loadedImage.clone();
-	equalizeHist(_loadedImage, imageForTracking, mask);
+	equalizeHist(_loadedImage, imageForTracking, _globalRectangleMask);
 	// Detect what we should track
 	vector <Point2f> corners;
-	goodFeaturesToTrack(imageForTracking, corners, TRACKING_NUM_POINTS, TRACKING_QUALITY, TRACKING_MIN_DIST, mask, 3, true);
+	goodFeaturesToTrack(imageForTracking, corners, TRACKING_NUM_POINTS, TRACKING_QUALITY, TRACKING_MIN_DIST, _globalRectangleMask, 3, false);
 	// Debug display
 	Image<uchar> displayDebug = imageForTracking.clone();
 	for (auto& point : corners)
@@ -504,10 +511,11 @@ void ImageLoader::TrackFeaturesInsideBoard()
 	imshow("Tracking", displayDebug);
 }
 
-void ImageLoader::DetectIntersect()
+bool ImageLoader::FindHomographyWithDetectedRectangles()
 {
-	if (_detectedRectangles.size() <= 1)
-		return;
+	// TODO: Fix this copy-paste
+	if (_detectedRectangles.size() <= 4 || !_nbCases)
+		return false;
 	vector<double> heights;
 	vector<double> widths;
 	for (int i = 0; i < _detectedRectangles.size(); i++)
@@ -519,8 +527,64 @@ void ImageLoader::DetectIntersect()
 	sort(widths.begin(), widths.end());
 	double medianh = heights[heights.size() / 2];
 	double medianw = widths[widths.size() / 2];
-	int nbSquaresw = ceil(_globalRectangle.size.width / medianw -0.1);
-	int nbSquaresh = ceil(_globalRectangle.size.height / medianh -0.1);
+	// 
+	Point2f unityX(float(cos(_rectangleOrientation)), float(sin(_rectangleOrientation)));
+	Point2f unityY(float(sin(_rectangleOrientation)), -float(cos(_rectangleOrientation)));
+	Point2f topLeft(_topLeft.x, _topLeft.y);
+	_homographyCurrentFrame = _homographyCurrentFrame % RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY;
+	std::vector<Point2f>& points1 = _homographyOriginalPoints[_homographyCurrentFrame];
+	std::vector<Point2f>& points2 = _homographyTransformedPoints[_homographyCurrentFrame];
+	points1.clear();
+	points2.clear();
+
+	int distCasesPixels = *(_loadedImage.size) / _nbCases;
+	points1.push_back(Point2f(topLeft));
+	points2.push_back(Point2f(distCasesPixels / 2, distCasesPixels/2));
+	for (auto& rectangle : _detectedRectangles)
+	{
+		int coordX = -round((rectangle.center - topLeft).dot(unityX) / medianw);
+		int coordY = -round((rectangle.center - topLeft).dot(unityY) / medianh);
+		if (coordX >= 0 && coordX < _nbCases &&
+			coordY >= 0 && coordY < _nbCases)
+		{
+			points1.push_back(Point2f(rectangle.center));
+			points2.push_back(Point2f(distCasesPixels / 2 + coordX * distCasesPixels, distCasesPixels / 2 + coordY * distCasesPixels));
+		}
+		else
+			printf("Invalid coord: [%d:%d]\n", coordX, coordY);
+	}
+	// Merge with previous points
+	std::vector<Point2f> allPoints1;
+	std::vector<Point2f> allPoints2;
+	for (int i = 0; i < RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY; ++i)
+	{
+		allPoints1.insert(allPoints1.end(), _homographyOriginalPoints[i].begin(), _homographyOriginalPoints[i].end());
+		allPoints2.insert(allPoints2.end(), _homographyTransformedPoints[i].begin(), _homographyTransformedPoints[i].end());
+	}
+	// Not enough points to find an homography
+	if (allPoints1.size() < 10)
+		return false;
+	_homography = findHomography(allPoints1, allPoints2, CV_RANSAC);
+	return true;
+}
+
+void ImageLoader::DetectIntersect()
+{
+	if (_detectedRectangles.size() <= 1)
+		return;
+	vector<double> heights;
+	vector<double> widths;
+	for (auto& rectangle :_detectedRectangles)
+	{
+		heights.push_back(rectangle.size.height);
+		widths.push_back(rectangle.size.width);
+	}
+	sort(heights.begin(), heights.end());
+	sort(widths.begin(), widths.end());
+	double medianh = heights[heights.size() / 2];
+	double medianw = widths[widths.size() / 2];
+	int nbSquaresw = ceil(_globalRectangle.size.width / medianw -0.2);
+	int nbSquaresh = ceil(_globalRectangle.size.height / medianh -0.2);
 	if (nbSquaresw == nbSquaresh)
 	{
 		_nbCasesTab[(++_currentCase) % TRACKING_NB_IMAGES_FOR_CASES_COUNT] = nbSquaresw;
@@ -531,11 +595,12 @@ void ImageLoader::DetectIntersect()
 		printf("Non : %d ou %d ?\n", nbSquaresw, nbSquaresh);
 		_nbCasesTab[(++_currentCase) % TRACKING_NB_IMAGES_FOR_CASES_COUNT] = std::max(nbSquaresw, nbSquaresh);
 	}
-	int nbCasesProba[20];
-	for (int i = 0; i < 20; ++i)
-		nbCasesProba[i] = 0;
+	int nbCasesProba[20] = { 0 };
 	for (int i = 0; i < TRACKING_NB_IMAGES_FOR_CASES_COUNT; ++i)
+	{
+		assert(_nbCasesTab[i] < 20);
 		nbCasesProba[_nbCasesTab[i]]++;
+	}
 	int max = 0;
 	int ind = -1;
 	for (int i = 0; i < 20; ++i)
