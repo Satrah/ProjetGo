@@ -300,26 +300,28 @@ bool ImageLoader::FindHomographyWithDetectedRectangles()
 	Point2f unityY(float(sin(_rectangleOrientation)), -float(cos(_rectangleOrientation)));
 	Point2f topLeft(_topLeft.x, _topLeft.y);
 	_homographyCurrentFrame = _homographyCurrentFrame % RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY;
-	std::vector<Point2f>& points1 = _homographyOriginalPoints[_homographyCurrentFrame];
-	std::vector<Point2f>& points2 = _homographyTransformedPoints[_homographyCurrentFrame];
-	points1.clear();
-	points2.clear();
-
-	int distCasesPixels = *(_loadedImage.size) / _nbCases;
-	points1.push_back(Point2f(topLeft));
-	points2.push_back(Point2f(distCasesPixels / 2, distCasesPixels / 2));
-	for (auto& rectangle : _detectedRectangles)
+	if (fabs(_globalRectangle.size.width - _globalRectangle.size.height) < 0.1f * _globalRectangle.size.height)
 	{
-		int coordX = -round((rectangle.center - topLeft).dot(unityX) / medianw);
-		int coordY = -round((rectangle.center - topLeft).dot(unityY) / medianh);
-		if (coordX >= 0 && coordX < _nbCases &&
-			coordY >= 0 && coordY < _nbCases)
+		std::vector<Point2f>& points1 = _homographyOriginalPoints[_homographyCurrentFrame];
+		std::vector<Point2f>& points2 = _homographyTransformedPoints[_homographyCurrentFrame];
+		points1.clear();
+		points2.clear();
+		int distCasesPixels = *(_loadedImage.size) / _nbCases;
+		points1.push_back(Point2f(topLeft));
+		points2.push_back(Point2f(distCasesPixels / 2, distCasesPixels / 2));
+		for (auto& rectangle : _detectedRectangles)
 		{
-			points1.push_back(Point2f(rectangle.center));
-			points2.push_back(Point2f(distCasesPixels / 2 + coordX * distCasesPixels, distCasesPixels / 2 + coordY * distCasesPixels));
+			int coordX = -round((rectangle.center - topLeft).dot(unityX) / medianw);
+			int coordY = -round((rectangle.center - topLeft).dot(unityY) / medianh);
+			if (coordX >= 0 && coordX < _nbCases &&
+				coordY >= 0 && coordY < _nbCases)
+			{
+				points1.push_back(Point2f(rectangle.center));
+				points2.push_back(Point2f(distCasesPixels / 2 + coordX * distCasesPixels, distCasesPixels / 2 + coordY * distCasesPixels));
+			}
 		}
 	}
-	// Merge with previous points
+	// Merge previous points
 	std::vector<Point2f> allPoints1;
 	std::vector<Point2f> allPoints2;
 	for (int i = 0; i < RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY; ++i)
