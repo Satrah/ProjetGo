@@ -39,6 +39,7 @@ namespace GOProject
 		void DetectBoard1();
 		void DetectBoard2();
 		void TrackFeaturesInsideBoard();
+		void TrackFeaturesInsideBoard2();
 		bool FindHomographyWithDetectedRectangles();
 		void DetectIntersect();
 	protected:
@@ -49,7 +50,7 @@ namespace GOProject
 		inline Image<uchar> GetImage() const { return _loadedImage; }
 		static const int TRACKING_NB_IMAGES_FOR_CASES_COUNT = 20;
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
-		static const int TRACKING_NUM_POINTS = 64;
+		static const int TRACKING_NUM_POINTS = 60;
 		static const double TRACKING_QUALITY;
 		static const double TRACKING_MIN_DIST;
 	protected:
@@ -72,6 +73,8 @@ namespace GOProject
 		int _nbCases = 0;
 		int _currentCase = 0;
 		int _nbCasesTab[TRACKING_NB_IMAGES_FOR_CASES_COUNT];
+		std::vector<cv::Point2f> _noeuds;
+		Image<uchar> _imageForTracking;
 
 		const static int RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY = 10;
 		int _homographyCurrentFrame;
