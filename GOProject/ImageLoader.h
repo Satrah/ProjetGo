@@ -14,7 +14,10 @@ namespace GOProject
 	class ImageLoader
 	{
 	public:
-		ImageLoader() {}
+		ImageLoader() {
+			for (int i = 0; i < TRACKING_NB_IMAGES_FOR_CASES_COUNT; ++i)
+				_nbCasesTab[i] = 0;
+		}
 
 		bool Load(const char* imageFile);
 		inline bool Load(Image<uchar> image) { _loadedImage = image; return Loaded(); }
@@ -43,7 +46,7 @@ namespace GOProject
 		void DebugDisplaySquares() const;
 
 		inline Image<uchar> GetImage() const { return _loadedImage; }
-
+		static const int TRACKING_NB_IMAGES_FOR_CASES_COUNT = 20;
 		static const int HOUGH_LINES_HISTO_ORIG_COUNT = 10;
 		static const int TRACKING_NUM_POINTS = 15;
 		static const double TRACKING_QUALITY;
@@ -65,6 +68,8 @@ namespace GOProject
 		cv::Point _botRight;
 		int _boardSize;
 		int _nbCases = 0;
+		int _currentCase = 0;
+		int _nbCasesTab[TRACKING_NB_IMAGES_FOR_CASES_COUNT];
 	};
 };
 

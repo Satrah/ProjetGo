@@ -539,16 +539,32 @@ void ImageLoader::DetectIntersect()
 	sort(widths.begin(), widths.end());
 	double medianh = heights[heights.size() / 2];
 	double medianw = widths[widths.size() / 2];
-	int nbSquaresw = ceil(_globalRectangle.size.width / medianw);
-	int nbSquaresh = ceil(_globalRectangle.size.height / medianh);
+	int nbSquaresw = ceil(_globalRectangle.size.width / medianw -0.1);
+	int nbSquaresh = ceil(_globalRectangle.size.height / medianh -0.1);
 	if (nbSquaresw == nbSquaresh)
 	{
-		_nbCases = nbSquaresw;
-		printf("ok : %d\n",_nbCases);
+		_nbCasesTab[(++_currentCase) % TRACKING_NB_IMAGES_FOR_CASES_COUNT] = nbSquaresw;
+		printf("ok : %d\n", nbSquaresw);
 	}
 	else
 	{	
 		printf("Non : %d ou %d ?\n", nbSquaresw, nbSquaresh);
+		_nbCasesTab[(++_currentCase) % TRACKING_NB_IMAGES_FOR_CASES_COUNT] = std::max(nbSquaresw, nbSquaresh);
 	}
+	int nbCasesProba[20];
+	for (int i = 0; i < 20; ++i)
+		nbCasesProba[i] = 0;
+	for (int i = 0; i < TRACKING_NB_IMAGES_FOR_CASES_COUNT; ++i)
+		nbCasesProba[_nbCasesTab[i]]++;
+	int max = 0;
+	int ind = -1;
+	for (int i = 0; i < 20; ++i)
+		if (nbCasesProba[i] > max)
+		{
+			max = nbCasesProba[i];
+			ind = i;
+		}
+	_nbCases = ind;
+	printf("Nombre de cases probable : %d", ind);
 
 }
