@@ -36,6 +36,7 @@ namespace GOProject
 		void DetectBoard1();
 		void DetectBoard2();
 		void TrackFeaturesInsideBoard();
+		void DetectIntersect();
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
 	public:
@@ -63,6 +64,7 @@ namespace GOProject
 		cv::Point _topLeft;
 		cv::Point _botRight;
 		int _boardSize;
+		int _nbCases = 0;
 	};
 };
 

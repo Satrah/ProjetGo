@@ -495,6 +495,7 @@ void ImageLoader::DetectBoard2()
 	_globalRectangle.points(rect_points);
 	for (int j = 0; j < 4; j++)
 		line(drawing, rect_points[j], rect_points[(j + 1) % 4], Scalar(255, 255, 255), 1, 8);
+	
 	imshow("Corner2", drawing);
 }
 
@@ -521,4 +522,33 @@ void ImageLoader::TrackFeaturesInsideBoard()
 	for (auto& point : corners)
 		circle(displayDebug, point, 5, Scalar(100));
 	imshow("Tracking", displayDebug);
+}
+
+void ImageLoader::DetectIntersect()
+{
+	if (_detectedRectangles.size() <= 1)
+		return;
+	vector<double> heights;
+	vector<double> widths;
+	for (int i = 0; i < _detectedRectangles.size(); i++)
+	{
+		heights.push_back(_detectedRectangles[i].size.height);
+		widths.push_back(_detectedRectangles[i].size.width);
+	}
+	sort(heights.begin(), heights.end());
+	sort(widths.begin(), widths.end());
+	double medianh = heights[heights.size() / 2];
+	double medianw = widths[widths.size() / 2];
+	int nbSquaresw = ceil(_globalRectangle.size.width / medianw);
+	int nbSquaresh = ceil(_globalRectangle.size.height / medianh);
+	if (nbSquaresw == nbSquaresh)
+	{
+		_nbCases = nbSquaresw;
+		printf("ok : %d\n",_nbCases);
+	}
+	else
+	{	
+		printf("Non : %d ou %d ?\n", nbSquaresw, nbSquaresh);
+	}
+
 }

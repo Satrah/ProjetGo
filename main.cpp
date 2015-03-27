@@ -54,7 +54,7 @@ void TestHoughLinesFromWebcam()
 		//loader.DisplayVerticalAndHorizontalLines("HoughCleared");
 		loader.DetectSquareForms();
 		loader.DetectBoard2();
-		loader.TrackFeaturesInsideBoard();
+		loader.DetectIntersect();
 		//loader.DebugDisplaySquares();
 
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
