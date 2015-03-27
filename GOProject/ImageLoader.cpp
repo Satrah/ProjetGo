@@ -509,10 +509,16 @@ void ImageLoader::DetectIntersect()
 	sort(widths.begin(), widths.end());
 	double medianh = heights[heights.size() / 2];
 	double medianw = widths[widths.size() / 2];
-	int nbSquares = _globalRectangle.size.height / medianh;
-	if (nbSquares == _globalRectangle.size.width / medianw)
-		printf("ok");
+	int nbSquaresw = ceil(_globalRectangle.size.width / medianw);
+	int nbSquaresh = ceil(_globalRectangle.size.height / medianh);
+	if (nbSquaresw == nbSquaresh)
+	{
+		_nbCases = nbSquaresw;
+		printf("ok : %d\n",_nbCases);
+	}
 	else
-		printf("Non");
+	{	
+		printf("Non : %d ou %d ?\n", nbSquaresw, nbSquaresh);
+	}
 
 }

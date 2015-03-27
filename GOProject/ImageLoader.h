@@ -60,6 +60,7 @@ namespace GOProject
 		cv::Point _topLeft;
 		cv::Point _botRight;
 		int _boardSize;
+		int _nbCases = 0;
 	};
 };
 
