@@ -60,9 +60,9 @@ void TestHoughLinesFromWebcam()
 		if (loader.FindHomographyWithDetectedRectangles())
 		{
 			/// READ FINISHED
-
 			loader.ApplyHomography();
-			loader.DisplayTransformedImage();
+
+			imshow("Transformed Image", loader.GetImage());
 		}
 
 		loader.DebugDisplaySquares();
