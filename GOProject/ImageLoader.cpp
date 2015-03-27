@@ -503,6 +503,52 @@ void ImageLoader::TrackFeaturesInsideBoard()
 		circle(displayDebug, point, 5, Scalar(0), 3);
 	imshow("Tracking", displayDebug);
 }
+void ImageLoader::TrackFeaturesInsideBoard2()
+{
+	// Calculate mask
+	if (_noeuds.empty())
+	{
+		Image<uchar> mask = Mat::zeros(_loadedImage.size(), CV_8UC1);
+		fillRectangle(mask, _globalRectangle);
+		// Prepare image
+		_imageForTracking = _loadedImage.clone();
+		equalizeHist(_loadedImage, _imageForTracking, mask);
+		// Detect what we should track
+		goodFeaturesToTrack(_imageForTracking, _noeuds, TRACKING_NUM_POINTS, TRACKING_QUALITY, TRACKING_MIN_DIST, mask, 3, true);
+	}
+	else
+	{
+		std::vector<Point2f> noeud;
+		Image<uchar> mask = Mat::zeros(_loadedImage.size(), CV_8UC1);
+		fillRectangle(mask, _globalRectangle);
+		int assez = 0;
+		for (int i = 0; i < _noeuds.size(); i++)
+		{
+			Image<uchar> mask2 = Mat::zeros(_loadedImage.size(), CV_8UC1);
+			fillRectangle(mask2, RotatedRect(_noeuds[i], Size(10,10), 0));
+			goodFeaturesToTrack(_loadedImage, noeud, 1, TRACKING_QUALITY, TRACKING_MIN_DIST, mask2, 3, true);
+			if (!noeud.empty())
+			{
+				_noeuds[i] = noeud[0];
+				assez++;
+			}
+			else _noeuds[i] = cv::Point2f(30,30);
+		}
+		_imageForTracking = _loadedImage.clone();
+		equalizeHist(_loadedImage, _imageForTracking, mask);
+		Image<uchar> displayDebug = _imageForTracking.clone();
+		for (auto& point : _noeuds)
+			circle(displayDebug, point, 5, Scalar(0), 3);
+		imshow("Tracking", displayDebug);
+		if (assez < 6)
+			_noeuds.clear();
+	}
+	// Debug display
+	/*Image<uchar> displayDebug = imageForTracking.clone();
+	for (auto& point : corners)
+		circle(displayDebug, point, 5, Scalar(0), 3);
+	imshow("Tracking", displayDebug);*/
+}
 
 void ImageLoader::DetectIntersect()
 {
