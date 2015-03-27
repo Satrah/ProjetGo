@@ -72,23 +72,6 @@ int comparInt(void* a, void* b)
 		return 0;
 	return -1;
 }
-// Finds the intersection of two lines, or returns false.
-// The lines are defined by (o1, p1) and (o2, p2).
-bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2,
-	Point2f &r)
-{
-	Point2f x = o2 - o1;
-	Point2f d1 = p1 - o1;
-	Point2f d2 = p2 - o2;
-
-	float cross = d1.x*d2.y - d1.y*d2.x;
-	if (abs(cross) < /*EPS*/1e-8)
-		return false;
-
-	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
-	r = o1 + d1 * t1;
-	return true;
-}
 
 inline bool AppendIntersec(Vec4i& a, Vec4i& b, std::vector<Point2f>& intersec)
 {
@@ -446,8 +429,11 @@ void ImageLoader::MoveLine(Point& begin, Point2f const& direction)
 	RectanglesSorter sorter;
 	sorter.lineA = Point2f(begin);
 	sorter.lineB = lineSecondPoint;
-	std::nth_element(rectanglesList.begin(), rectanglesList.begin(), rectanglesList.end(), sorter);
-	sorter.MovePoint(begin, direction, rectanglesList[0]);
+	int pos = 0;
+	if (rectanglesList.size() > 5)
+		pos = 1;
+	std::nth_element(rectanglesList.begin(), rectanglesList.begin() + pos, rectanglesList.end(), sorter);
+	sorter.MovePoint(begin, direction, rectanglesList[pos]);
 	//printf("Pt moved to [%i %i] center is [%f %f]\n", begin.x, begin.y, rectanglesList[0].center.x, rectanglesList[0].center.y);
 }
 
@@ -504,13 +490,7 @@ void ImageLoader::TrackFeaturesInsideBoard()
 {
 	// Calculate mask
 	Image<uchar> mask = Mat::zeros(_loadedImage.size(), CV_8UC1);
-	for (auto& rect : _detectedRectangles)
-	{
-		Rect br = rect.boundingRect();
-		for (int x = 0; x < br.width; ++x)
-		for (int y = 0; y < br.height; ++y)
-			mask(x, y) = 1;
-	}
+	fillRectangle(mask, _globalRectangle);
 	// Prepare image
 	Image<uchar> imageForTracking = _loadedImage.clone();
 	equalizeHist(_loadedImage, imageForTracking, mask);
@@ -520,7 +500,7 @@ void ImageLoader::TrackFeaturesInsideBoard()
 	// Debug display
 	Image<uchar> displayDebug = imageForTracking.clone();
 	for (auto& point : corners)
-		circle(displayDebug, point, 5, Scalar(100));
+		circle(displayDebug, point, 5, Scalar(0), 3);
 	imshow("Tracking", displayDebug);
 }
 
