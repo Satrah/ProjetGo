@@ -641,19 +641,16 @@ void ImageLoader::DetectIntersect()
 		printf("Non : %d ou %d ?\n", nbSquaresw, nbSquaresh);
 		_nbCasesTab[(++_currentCase) % TRACKING_NB_IMAGES_FOR_CASES_COUNT] = std::max(nbSquaresw, nbSquaresh);
 	}
-	int nbCasesProba[20] = { 0 };
+	std::map<int, int> nbCasesProba;
 	for (int i = 0; i < TRACKING_NB_IMAGES_FOR_CASES_COUNT; ++i)
-	{
-		assert(_nbCasesTab[i] < 20);
 		nbCasesProba[_nbCasesTab[i]]++;
-	}
 	int max = 0;
 	int ind = -1;
-	for (int i = 0; i < 20; ++i)
-		if (nbCasesProba[i] > max)
+	for (auto& i : nbCasesProba)
+		if (i.second > max)
 		{
-			max = nbCasesProba[i];
-			ind = i;
+			max = i.second;
+			ind = i.first;
 		}
 	_nbCases = ind;
 	printf("Nombre de cases probable : %d", ind);
