@@ -35,6 +35,7 @@ namespace GOProject
 		void DetectSquareForms();
 		void DetectBoard1();
 		void DetectBoard2();
+		void DetectIntersect();
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
 	public:
