@@ -14,7 +14,7 @@ namespace GOProject
 	class ImageLoader
 	{
 	public:
-		ImageLoader() {
+		ImageLoader() : _homographyCurrentFrame(0) {
 			for (int i = 0; i < TRACKING_NB_IMAGES_FOR_CASES_COUNT; ++i)
 				_nbCasesTab[i] = 0;
 		}
@@ -23,7 +23,7 @@ namespace GOProject
 		inline bool Load(Image<uchar> image) { _loadedImage = image; return Loaded(); }
 		inline bool Loaded() const { return _loadedImage.data != NULL; }
 		void Detect();
-		// Hough lines and homography finding
+		// Hough lines to find an homography
 		void DetectLinesHough(int threshold = 50, int minLineLength = 50, int maxLineGap = 10);
 		Image<uchar> DisplayHoughLines(const char* winName = "hough lines") const;
 		void DisplayVerticalAndHorizontalLines(const char* winName = "hough lines cleared");
@@ -40,6 +40,7 @@ namespace GOProject
 		void DetectBoard2();
 		void TrackFeaturesInsideBoard();
 		void TrackFeaturesInsideBoard2();
+		bool FindHomographyWithDetectedRectangles();
 		void DetectIntersect();
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
@@ -65,6 +66,7 @@ namespace GOProject
 
 		std::vector<cv::RotatedRect> _detectedRectangles;
 		cv::RotatedRect _globalRectangle;
+		Image<uchar> _globalRectangleMask;
 		cv::Point _topLeft;
 		cv::Point _botRight;
 		int _boardSize;
@@ -73,6 +75,11 @@ namespace GOProject
 		int _nbCasesTab[TRACKING_NB_IMAGES_FOR_CASES_COUNT];
 		std::vector<cv::Point2f> _noeuds;
 		Image<uchar> _imageForTracking;
+
+		const static int RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY = 10;
+		int _homographyCurrentFrame;
+		std::vector<cv::Point2f> _homographyOriginalPoints[RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY];
+		std::vector<cv::Point2f> _homographyTransformedPoints[RECTANGLE_HOMOGRAPHY_FRAMES_MEMORY];
 	};
 };
 
