@@ -42,6 +42,7 @@ namespace GOProject
 		void TrackFeaturesInsideBoard2();
 		bool FindHomographyWithDetectedRectangles();
 		void DetectIntersect();
+		void DetectEllipse();
 		inline int GetSize(){ return _nbCases; };
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);

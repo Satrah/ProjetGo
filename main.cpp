@@ -5,6 +5,7 @@
 
 #include "ImageLoader.h"
 #include "Image.h"
+#include "AlGo.h"
 
 using namespace GOProject;
 using namespace std;
@@ -29,6 +30,7 @@ void TestHoughLinesFromWebcam()
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
 	GOProject::ImageLoader loader;
+	GOProject::AlGo go;
 	while (true)
 	{
 		char k = waitKey(10);
@@ -67,9 +69,14 @@ void TestHoughLinesFromWebcam()
 
 		loader.DebugDisplaySquares();
 
+		loader.DetectEllipse();
+
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);
 		createTrackbar("max gaphoughTreshold", "Hough", &houghTreshold, 150);
+		go.charge(loader);
+		go.affichePlateau();
+		go.suggereCoup(loader);
 	}
 
 	waitKey();

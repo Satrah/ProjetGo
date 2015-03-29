@@ -1,4 +1,7 @@
+#pragma once
+
 #include <vector>
+#include <map>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "ImageLoader.h"
@@ -9,14 +12,16 @@ namespace GOProject
 	public:
 		enum EtatCase
 		{
-			CASE_VIDE,
-			CASE_NOIRE,
-			CASE_BLANCHE,
+			CASE_VIDE		= 'v',
+			CASE_NOIRE		= 'n',
+			CASE_BLANCHE	= 'b',
 		};
 		void charge(ImageLoader loader);
 		void suggereCoup(ImageLoader loader);
+		void affichePlateau();
 	protected:
-		std::map<cv::Point, EtatCase> _plateau;
+		typedef std::pair<int, int> BoardPosition;
+		std::map<BoardPosition, EtatCase> _plateau;
 		int _taillePlateau;
 	};
 }
