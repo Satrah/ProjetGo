@@ -17,6 +17,7 @@ namespace GOProject
 			CASE_BLANCHE	= 'b',
 		};
 		void charge(ImageLoader loader);
+		void refresh(ImageLoader loader);
 		void suggereCoup(ImageLoader loader);
 		void affichePlateau();
 	protected:
