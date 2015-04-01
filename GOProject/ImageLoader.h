@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "Image.h"
+#include "Utils.h"
 
 namespace GOProject
 {
-	typedef std::vector<cv::Vec4i> LinesVec;
 	class ImageLoader
 	{
 	public:

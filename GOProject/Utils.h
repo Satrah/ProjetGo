@@ -2,6 +2,12 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
+
+namespace GOProject
+{
+	typedef std::vector<cv::Vec4i> LinesVec;
+};
+
 void cvEqualizeHist(const CvArr* srcarr, CvArr* dstarr, CvMat* mask);
 void equalizeHist(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _mask = cv::noArray());
 // Finds the intersection of two lines, or returns false.
