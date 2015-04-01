@@ -49,6 +49,8 @@ void TestHoughLinesFromWebcam()
 
 		perspectiveFinder.Load(webcamGrey);
 		perspectiveFinder.HomographyTransform();
+		imshow("HomographyTransformed", perspectiveFinder);
+		continue;
 		loader.Load(perspectiveFinder);
 		loader.DetectSquareForms();
 		loader.DetectBoard2();

@@ -100,20 +100,46 @@ bool PerspectiveFinder::HomographyTransform()
 			rightLine = l;
 		}
 	}
-	line(cdst, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), Scalar(0, 0, 255), 2, CV_AA);
-	line(cdst, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), Scalar(0, 255, 255), 2, CV_AA);
 
 	// 5- We're done ! We have a left line, a right line, let's compute the divine homography NOW
-	std::vector<Point2f> points1, points2;
-	points1.push_back(Point2f(0, 0));
-	points2.push_back(Point2f(rightLine[2], rightLine[3]));
-	points1.push_back(Point2f(0, height()));
-	points2.push_back(Point2f(rightLine[0], rightLine[1]));
-	points1.push_back(Point2f(height(), 0));
-	points2.push_back(Point2f(leftLine[2], leftLine[3]));
-	points1.push_back(Point2f(height(), height()));
-	points2.push_back(Point2f(leftLine[0], leftLine[1]));
-	Mat H = findHomography(points2, points1, CV_RANSAC);
+	// But first, are our left / right line valid ?
+	float line1H = abs(leftLine[1] - leftLine[3]);
+	float line2H = abs(rightLine[1] - rightLine[3]);
+	bool pointsValid = true;
+	// Diff height ?
+	if (fabs((line1H - line2H) / (line1H + line2H)) > 0.2f)
+		pointsValid = false;
+	if (fabs((leftLine[0] - minXBottom) / float(width())) > 0.05f)
+		pointsValid = false;
+	if (fabs((rightLine[0] - maxXBottom) / float(width())) > 0.05f)
+		pointsValid = false;
+
+	if (!pointsValid && _pointsOrig.size())
+	{
+		// Invalid
+		line(cdst, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), Scalar(0, 255, 0), 2, CV_AA);
+		line(cdst, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), Scalar(0, 255, 0), 2, CV_AA);
+	}
+	else
+	{
+		line(cdst, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), Scalar(0, 0, 255), 2, CV_AA);
+		line(cdst, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), Scalar(0, 0, 255), 2, CV_AA);
+
+		if (_pointsOrig.size() > _memoryPoints)
+		{
+			_pointsOrig.erase(_pointsOrig.begin(), _pointsOrig.begin() + 4);
+			_pointsDest.erase(_pointsDest.begin(), _pointsDest.begin() + 4);
+		}
+		_pointsOrig.push_back(Point2f(0, 0));
+		_pointsDest.push_back(Point2f(rightLine[2], rightLine[3]));
+		_pointsOrig.push_back(Point2f(0, height()));
+		_pointsDest.push_back(Point2f(rightLine[0], rightLine[1]));
+		_pointsOrig.push_back(Point2f(height(), 0));
+		_pointsDest.push_back(Point2f(leftLine[2], leftLine[3]));
+		_pointsOrig.push_back(Point2f(height(), height()));
+		_pointsDest.push_back(Point2f(leftLine[0], leftLine[1]));
+	}
+	Mat H = findHomography(_pointsDest, _pointsOrig, CV_RANSAC);
 
 	// 6- W00t ! Apply the homography
 	Image<uchar> me = clone();
