@@ -6,6 +6,8 @@
 #include "ImageLoader.h"
 #include "Image.h"
 #include "AlGo.h"
+#include "PerspectiveFinder.h"
+
 
 using namespace GOProject;
 using namespace std;
@@ -30,6 +32,7 @@ void TestHoughLinesFromWebcam()
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
 	GOProject::ImageLoader loader;
+	GOProject::PerspectiveFinder perspectiveFinder;
 	GOProject::AlGo go;
 	while (true)
 	{
@@ -44,7 +47,9 @@ void TestHoughLinesFromWebcam()
 
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
-		loader.Load(webcamGrey);
+		perspectiveFinder.Load(webcamGrey);
+		perspectiveFinder.HomographyTransform();
+		loader.Load(perspectiveFinder);
 		loader.DetectSquareForms();
 		loader.DetectBoard2();
 

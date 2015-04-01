@@ -13,6 +13,10 @@ namespace GOProject
 		Image(): cv::Mat() {}
 		Image(const cv::Mat& A):cv::Mat(A) {}
 		Image(int w,int h,int type):cv::Mat(h,w,type) {}
+		void Load(cv::Mat& A)
+		{
+			A.copyTo(*this);
+		}
 		// Accessors
 		inline T operator()(int x,int y) const { return at<T>(y,x); }
 		inline T& operator()(int x,int y) { return at<T>(y,x); }
