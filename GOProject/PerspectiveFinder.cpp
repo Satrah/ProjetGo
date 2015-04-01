@@ -1,6 +1,5 @@
 #include <opencv2/highgui/highgui.hpp>
 
-#include "MSAC.h"
 #include "PerspectiveFinder.h"
 #include "Utils.h"
 
