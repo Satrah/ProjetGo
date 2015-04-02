@@ -106,3 +106,69 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 	circle(out, Point(3 * _pxlPerCase, 3 * _pxlPerCase), _pxlPerCase/2, Scalar(153, 76, 42, 255), 10);
 	return true;
 }
+
+int AlGo::_calculLibAux(int i, int j, std::map<BoardPosition, bool> calcule)
+{
+	BoardPosition ici = BoardPosition(i, j);
+	EtatCase couleur = _plateau[ici];
+	if (calcule[ici])
+		return _libertes[ici];
+	calcule[ici] = true;
+	if (i > 0 && _plateau[BoardPosition(i - 1, j)] == couleur)
+	{
+		if (!calcule[BoardPosition(i - 1, j)])
+			_libertes[ici] += _calculLibAux(i - 1, j, calcule);
+		else
+			_libertes[ici] += _libertes[BoardPosition(i - 1, j)];
+	}
+	if (i < _taillePlateau && _plateau[BoardPosition(i + 1, j)] == couleur)
+	{
+		if (!calcule[BoardPosition(i + 1, j)])
+			_libertes[ici] += _calculLibAux(i + 1, j, calcule);
+		else
+			_libertes[ici] += _libertes[BoardPosition(i + 1, j)];
+	}
+	if (j > 0 && _plateau[BoardPosition(i, j - 1)] == couleur)
+	{
+		if (!calcule[BoardPosition(i, j - 1)])
+			_libertes[ici] += _calculLibAux(i, j - 1, calcule);
+		else
+			_libertes[ici] += _libertes[BoardPosition(i, j - 1)];
+	}
+	if (j < _taillePlateau && _plateau[BoardPosition(i, j + 1)] == couleur)
+	{
+		if (!calcule[BoardPosition(i, j + 1)])
+			_libertes[ici] += _calculLibAux(i, j + 1, calcule);
+		else
+			_libertes[ici] += _libertes[BoardPosition(i, j + 1)];
+	}
+	return _libertes[ici];
+}
+
+void AlGo::calculLibertes()
+{
+	std::map<BoardPosition, bool> calcule;
+	for (int i = 0; i < _taillePlateau; ++i)
+		for (int j = 0; j < _taillePlateau; ++j)
+		{
+			calcule[BoardPosition(i, j)] = false;
+		}
+	//calcule des cases vides adjacentes
+	for (int i = 0; i < _taillePlateau; ++i)
+		for (int j = 0; j < _taillePlateau; ++j)
+		{
+			BoardPosition ici = BoardPosition(i, j);
+			EtatCase couleur = _plateau[ici];
+			_libertes[ici] = 0;
+			if (couleur = CASE_VIDE)
+				continue;
+			if (_plateau[BoardPosition(i - 1, j)] == CASE_VIDE)
+				_libertes[ici]++;
+		}
+	//calcule par groupe
+	for (int i = 0; i < _taillePlateau; ++i)
+		for (int j = 0; j < _taillePlateau; ++j)
+		{
+			_libertes[BoardPosition(i, j)] = _calculLibAux(i, j, calcule);
+		}
+}
