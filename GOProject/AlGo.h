@@ -18,9 +18,9 @@ namespace GOProject
 		};
 		void charge(ImageLoader const& loader);
 		void refresh(ImageLoader const& loader);
-		void suggereCoup(ImageLoader const& loader);
+		bool render(Image<cv::Vec4b>& out);
 		void affichePlateau();
-		AlGo(){ Image<uchar> I;  for (int i = 0; i < MEMORY_FRAMES; ++i) _memory.push_back(I); }
+		AlGo() : _pxlPerCase(0) { Image<float> I;  for (int i = 0; i < MEMORY_FRAMES; ++i) _memory.push_back(I); }
 	protected:
 		static const int MEMORY_FRAMES = 40;
 		typedef std::pair<int, int> BoardPosition;
@@ -28,5 +28,6 @@ namespace GOProject
 		int _taillePlateau;
 		std::vector<Image<float>> _memory;
 		int _current = 0;
+		int _pxlPerCase;
 	};
 }

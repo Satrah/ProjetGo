@@ -163,17 +163,8 @@ void ImageLoader::FindBestHomography(int nIterations, int nSuccessfullIterations
 		if (fabs((*vert)[0]) < 0.1f)
 			++currentScore;
 		for (std::vector<Vec2f>::const_iterator horiz = horizontalTransform.begin(); horiz != horizontalTransform.end(); ++horiz)
-		if (fabs((*horiz)[1]) < 0.1f)
-			++currentScore;
-		/* Third possible method: monte carlo.
-		for (int i = 0; i < 50; ++i)
-		{
-		Vec2f vert = transformVectorAndNormalize(_verticalLines[rand() % _verticalLines.size()], H);
-		Vec2f horiz = transformVectorAndNormalize(_horizontalLines[rand() % _horizontalLines.size()], H);
-		double scalarProd = vert.dot(horiz);
-		if (fabs(scalarProd) < 0.1f)
-		++currentScore;
-		} */
+			if (fabs((*horiz)[1]) < 0.1f)
+				++currentScore;
 		if (currentScore > bestHscore)
 		{
 			bestHscore = currentScore;

@@ -48,6 +48,7 @@ namespace GOProject
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
 	public:
 		void DebugDisplaySquares() const;
+		cv::Mat GetHomography() const { return _homography; }
 
 		inline Image<uchar> GetImage() const { return _loadedImage; }
 		static const int TRACKING_NB_IMAGES_FOR_CASES_COUNT = 20;

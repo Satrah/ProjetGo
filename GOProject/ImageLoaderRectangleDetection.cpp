@@ -333,18 +333,18 @@ bool ImageLoader::FindHomographyWithDetectedRectangles()
 		std::vector<Point2f>& points2 = _homographyTransformedPoints[_homographyCurrentFrame];
 		points1.clear();
 		points2.clear();
-		int distCasesPixels = *(_loadedImage.size) / _nbCases;
+		int distCasesPixels = *(_loadedImage.size) / (_nbCases + 2); // 1 case margin top + 1 margin bot (=2)
 		points1.push_back(Point2f(topLeft));
 		points2.push_back(Point2f(distCasesPixels / 2, distCasesPixels / 2));
 		for (auto& rectangle : _detectedRectangles)
 		{
-			int coordX = -round((rectangle.center - topLeft).dot(unityX) / medianw);
-			int coordY = -round((rectangle.center - topLeft).dot(unityY) / medianh);
+			int coordX = round((-rectangle.center + topLeft).dot(unityX) / medianw);
+			int coordY = round((-rectangle.center + topLeft).dot(unityY) / medianh);
 			if (coordX >= 0 && coordX < _nbCases &&
 				coordY >= 0 && coordY < _nbCases)
 			{
 				points1.push_back(Point2f(rectangle.center));
-				points2.push_back(Point2f(distCasesPixels / 2 + coordX * distCasesPixels, distCasesPixels / 2 + coordY * distCasesPixels));
+				points2.push_back(Point2f(distCasesPixels / 2 + (_nbCases - coordX) * distCasesPixels, distCasesPixels / 2 + (_nbCases - coordY) * distCasesPixels));
 			}
 		}
 	}

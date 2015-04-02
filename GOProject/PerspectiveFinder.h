@@ -10,6 +10,7 @@ namespace GOProject
 		PerspectiveFinder(int cornersOffset, int memoryPoints = 20) : _cornersOffset(cornersOffset), _memoryPoints(memoryPoints) {}
 		bool HomographyCalibrate();
 		void HomographyTransform();
+		cv::Mat GetHomography() const { return _homography; }
 	protected:
 		int _memoryPoints;
 		std::vector<cv::Point2f> _pointsOrig;
