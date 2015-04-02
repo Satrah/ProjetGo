@@ -10,7 +10,7 @@ using namespace cv;
 /**
  * We assume that we have horizontal and vertical lines for the board.
  */
-bool PerspectiveFinder::HomographyTransform()
+bool PerspectiveFinder::HomographyCalibrate()
 {
 	const float MAXIMUM_HORIZONTAL_DEVIATION = 0.1f;
 	const float MAXIMUM_VERTICAL_DEVIATION = 0.5f;
@@ -143,16 +143,13 @@ bool PerspectiveFinder::HomographyTransform()
 		_pointsOrig.push_back(Point2f(coordMax, coordMax));
 		_pointsDest.push_back(Point2f(leftLine[0], leftLine[1]));
 	}
-	Mat H = findHomography(_pointsDest, _pointsOrig, CV_RANSAC);
-
-	// 6- W00t ! Apply the homography
-	Image<uchar> me = clone();
-	warpPerspective(me, *this, H, size());
-
-	// 7- Attempt to fix contrast / equalize hist
-	//Mat meCpy = clone();
-	//equalizeHist(meCpy, *this); //equalize the histogram
-
+	_homography = findHomography(_pointsDest, _pointsOrig, CV_RANSAC);
 	imshow("Hough Lines", cdst);
 	return true;
+}
+
+void PerspectiveFinder::HomographyTransform()
+{
+	Image<uchar> me = clone();
+	warpPerspective(me, *this, _homography, size());
 }

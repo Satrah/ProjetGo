@@ -34,7 +34,9 @@ void TestHoughLinesFromWebcam()
 	GOProject::ImageLoader loader;
 	GOProject::PerspectiveFinder perspectiveFinder;
 	GOProject::AlGo go;
-	while (true)
+	int consecutiveSuccess = 0;
+	// Calibrate
+	while (consecutiveSuccess < 30)
 	{
 		char k = waitKey(10);
 		if (k == 'q')
@@ -48,43 +50,54 @@ void TestHoughLinesFromWebcam()
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
 		perspectiveFinder.Load(webcamGrey);
+		perspectiveFinder.HomographyCalibrate();
 		perspectiveFinder.HomographyTransform();
-		imshow("HomographyTransformed", perspectiveFinder);
-		continue;
 		loader.Load(perspectiveFinder);
 		loader.DetectSquareForms();
+		loader.DebugDisplaySquares();
 		loader.DetectBoard2();
 
-		// Lets find an homography in the found rectange :)
-		/*
-		loader.DetectLinesHough(houghTreshold, minLineLength, maxLineGap);
-		loader.BuildHoughLinesHistogram();
-		//loader.DisplayHoughLinesOrientation();
-		//loader.DisplayHoughLines("Hough");
-		loader.FilterVerticalLines();
-		loader.FindBestHomography();
-		loader.DisplayTransformedImage();
-		*/
 		loader.DetectIntersect();
 		if (loader.FindHomographyWithDetectedRectangles())
 		{
 			/// READ FINISHED
 			loader.ApplyHomography();
-
 			imshow("Transformed Image", loader.GetImage());
+			++consecutiveSuccess;
 		}
+		else
+			consecutiveSuccess = 0;
+		imshow("HomographyTransformed", perspectiveFinder);
+	}
+	while (true)
+	{
+		char k = waitKey(10);
+		if (k == 'q')
+			return;
+		if (k == 'p') // Pause
+			continue;
+		cap >> webcam;
+		if (webcam.empty())
+			continue;
 
-		loader.DebugDisplaySquares();
+		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
+		perspectiveFinder.Load(webcamGrey);
+		perspectiveFinder.HomographyTransform();
+		loader.Load(perspectiveFinder);
 
-		loader.DetectEllipse();
+		loader.DetectIntersect();
+		loader.ApplyHomography();
+
+		//loader.DebugDisplaySquares();
+
+		//loader.DetectEllipse();
 
 		createTrackbar("min line length", "Hough", &minLineLength, 100);
 		createTrackbar("max gap", "Hough", &maxLineGap, 100);
 		createTrackbar("max gaphoughTreshold", "Hough", &houghTreshold, 150);
 		go.charge(loader);
+		go.refresh(loader);
 		go.affichePlateau();
 		go.suggereCoup(loader);
 	}
-
-	waitKey();
 }
