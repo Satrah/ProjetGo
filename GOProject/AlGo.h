@@ -16,12 +16,13 @@ namespace GOProject
 			CASE_NOIRE		= 'n',
 			CASE_BLANCHE	= 'b',
 		};
-		void charge(ImageLoader loader);
-		void refresh(ImageLoader loader);
-		void suggereCoup(ImageLoader loader);
+		void charge(ImageLoader const& loader);
+		void refresh(ImageLoader const& loader);
+		void suggereCoup(ImageLoader const& loader);
 		void affichePlateau();
-		AlGo(){ Image<uchar> I;  for (int i = 0; i < 30; ++i) _memory.push_back(I); }
+		AlGo(){ Image<uchar> I;  for (int i = 0; i < MEMORY_FRAMES; ++i) _memory.push_back(I); }
 	protected:
+		static const int MEMORY_FRAMES = 40;
 		typedef std::pair<int, int> BoardPosition;
 		std::map<BoardPosition, EtatCase> _plateau;
 		int _taillePlateau;

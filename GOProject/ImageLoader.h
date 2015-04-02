@@ -43,7 +43,7 @@ namespace GOProject
 		bool FindHomographyWithDetectedRectangles();
 		void DetectIntersect();
 		void DetectEllipse();
-		inline int GetSize(){ return _nbCases; };
+		inline int GetSize() const { return _nbCases; };
 	protected:
 		void MoveLine(cv::Point& begin, cv::Point2f const& direction);
 	public:

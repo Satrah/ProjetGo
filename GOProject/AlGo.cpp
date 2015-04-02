@@ -6,16 +6,16 @@
 using namespace GOProject;
 using namespace cv;
 
-void AlGo::charge(ImageLoader loader)
+void AlGo::charge(ImageLoader const& loader)
 {
 	_taillePlateau = loader.GetSize()+1;
 	for (int i = 0; i < _taillePlateau; ++i)
 		for (int j = 0; j < _taillePlateau; ++j)
 			_plateau[BoardPosition(i, j)] = CASE_VIDE;
 }
-void AlGo::refresh(ImageLoader loader)
+void AlGo::refresh(ImageLoader const& loader)
 {
-	Image<uchar> I = loader.GetImage();
+	Image<uchar> I = loader.GetImage().clone();
 	Image<uchar> J;
 	//Image<uchar> K;
 	cornerHarris(I, J, 7, 7, 0.04);
@@ -24,7 +24,7 @@ void AlGo::refresh(ImageLoader loader)
 	imshow("Test", J);
 	_memory[_current] = J;
 	_current++;
-	_current %= 30;
+	_current %= MEMORY_FRAMES;
 
 	for (int i = 0; i < _taillePlateau; ++i)
 		for (int j = 0; j < _taillePlateau; ++j)
@@ -71,7 +71,7 @@ void AlGo::affichePlateau()
 				printf("\n");
 		}
 }
-void AlGo::suggereCoup(ImageLoader loader)
+void AlGo::suggereCoup(ImageLoader const& loader)
 {
 	//circle(loader.GetImage(), Point(100, 100), 50, 10, 3);
 }
