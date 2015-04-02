@@ -26,7 +26,7 @@ namespace GOProject
 		typedef std::pair<int, int> BoardPosition;
 		std::map<BoardPosition, EtatCase> _plateau;
 		int _taillePlateau;
-		std::vector<Image<uchar>> _memory;
+		std::vector<Image<float>> _memory;
 		int _current = 0;
 	};
 }

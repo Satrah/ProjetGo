@@ -74,7 +74,6 @@ void TestHoughLinesFromWebcam()
 	}
 	while (true)
 	{
-		char k = waitKey(10);
 		if (k == 'q')
 			return;
 		if (k == 'p') // Pause
