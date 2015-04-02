@@ -20,9 +20,12 @@ namespace GOProject
 		void refresh(ImageLoader loader);
 		void suggereCoup(ImageLoader loader);
 		void affichePlateau();
+		AlGo(){ Image<uchar> I;  for (int i = 0; i < 30; ++i) _memory.push_back(I); }
 	protected:
 		typedef std::pair<int, int> BoardPosition;
 		std::map<BoardPosition, EtatCase> _plateau;
 		int _taillePlateau;
+		std::vector<Image<uchar>> _memory;
+		int _current = 0;
 	};
 }

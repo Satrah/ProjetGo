@@ -8,7 +8,7 @@ using namespace cv;
 
 void AlGo::charge(ImageLoader loader)
 {
-	_taillePlateau = loader.GetSize();
+	_taillePlateau = loader.GetSize()+1;
 	for (int i = 0; i < _taillePlateau; ++i)
 		for (int j = 0; j < _taillePlateau; ++j)
 			_plateau[BoardPosition(i, j)] = CASE_VIDE;
@@ -17,16 +17,31 @@ void AlGo::refresh(ImageLoader loader)
 {
 	Image<uchar> I = loader.GetImage();
 	Image<uchar> J;
-	cornerHarris(I, J, 2, 3, 0.04);
-	GaussianBlur(J, J, Size(3,3), 0,0);
+	//Image<uchar> K;
+	cornerHarris(I, J, 7, 7, 0.04);
+	//GaussianBlur(J, J, Size(3, 3), 5, 5);
+	//GaussianBlur(I, K, Size(3, 3), 4, 4);
 	imshow("Test", J);
+	_memory[_current] = J;
+	_current++;
+	_current %= 30;
+
 	for (int i = 0; i < _taillePlateau; ++i)
 		for (int j = 0; j < _taillePlateau; ++j)
 		{
-			Point ici = Point((i*I.height()) / _taillePlateau, (j*I.height()) / _taillePlateau);
-			if (I(ici) > 150)
+			Point ici = Point((i*I.height()) / (_taillePlateau-1), (j*I.height()) / (_taillePlateau-1));
+			printf("%d ", J(ici));
+			if (j + 1 == _taillePlateau)
+				printf("\n");
+			int sum = 0;
+			for (int k = 0; k < _memory.size(); ++k)
+				if (!_memory[k].empty())
+					sum += _memory[k](ici);
+			sum /= _memory.size();
+			if (sum > 100)
+				_plateau[BoardPosition(i, j)] = CASE_VIDE;
+			else if (I(ici) > 100)
 				_plateau[BoardPosition(i, j)] = CASE_BLANCHE;
-			else if (J(ici) > 5);
 			else 
 				_plateau[BoardPosition(i, j)] = CASE_NOIRE;
 			
