@@ -14,8 +14,10 @@ bool PerspectiveFinder::HomographyTransform()
 {
 	const float MAXIMUM_HORIZONTAL_DEVIATION = 0.1f;
 	const float MAXIMUM_VERTICAL_DEVIATION = 0.5f;
-	const unsigned int VERTICAL_LINES_FIRST_BOTTOM = 0.8f * height(); // Vertical lines start in the 20% bottom of the image
-	const unsigned int VERTICAL_LINES_LAST_TOP = 0.5f * height();
+	const unsigned int VERTICAL_LINES_FIRST_BOTTOM = unsigned int(0.8f * height()); // Vertical lines start in the 20% bottom of the image
+	const unsigned int VERTICAL_LINES_LAST_TOP = unsigned int(0.5f * height());
+	const float SHIFT_CORNERS_OFFSET = 0.2f;
+
 	/// 1- Process image with Canny
 	Image<uchar> cannyImg;
 	Canny(*this, cannyImg, 50, 200, 3);
@@ -41,7 +43,7 @@ bool PerspectiveFinder::HomographyTransform()
 		double angle = atan(double(l[2] - l[0]) / (l[3] - l[1]));
 		if (fabs(angle - CV_PI / 2) < MAXIMUM_HORIZONTAL_DEVIATION || fabs(angle + CV_PI / 2) < MAXIMUM_HORIZONTAL_DEVIATION)
 		{
-			for (int i = 0; i < 2; ++i)
+			for (unsigned int i = 0; i < 2; ++i)
 				if (l[2*i+1] >= VERTICAL_LINES_FIRST_BOTTOM)
 				{
 					if (l[2 * i] < minXBottom)
@@ -130,13 +132,15 @@ bool PerspectiveFinder::HomographyTransform()
 			_pointsOrig.erase(_pointsOrig.begin(), _pointsOrig.begin() + 4);
 			_pointsDest.erase(_pointsDest.begin(), _pointsDest.begin() + 4);
 		}
-		_pointsOrig.push_back(Point2f(0, 0));
+		float coordMin = height() * SHIFT_CORNERS_OFFSET;
+		float coordMax = height() - coordMin;
+		_pointsOrig.push_back(Point2f(coordMin, coordMin));
 		_pointsDest.push_back(Point2f(rightLine[2], rightLine[3]));
-		_pointsOrig.push_back(Point2f(0, height()));
+		_pointsOrig.push_back(Point2f(coordMin, coordMax));
 		_pointsDest.push_back(Point2f(rightLine[0], rightLine[1]));
-		_pointsOrig.push_back(Point2f(height(), 0));
+		_pointsOrig.push_back(Point2f(coordMax, coordMin));
 		_pointsDest.push_back(Point2f(leftLine[2], leftLine[3]));
-		_pointsOrig.push_back(Point2f(height(), height()));
+		_pointsOrig.push_back(Point2f(coordMax, coordMax));
 		_pointsDest.push_back(Point2f(leftLine[0], leftLine[1]));
 	}
 	Mat H = findHomography(_pointsDest, _pointsOrig, CV_RANSAC);
@@ -144,6 +148,10 @@ bool PerspectiveFinder::HomographyTransform()
 	// 6- W00t ! Apply the homography
 	Image<uchar> me = clone();
 	warpPerspective(me, *this, H, size());
+
+	// 7- Attempt to fix contrast / equalize hist
+	//Mat meCpy = clone();
+	//equalizeHist(meCpy, *this); //equalize the histogram
 
 	imshow("Hough Lines", cdst);
 	return true;

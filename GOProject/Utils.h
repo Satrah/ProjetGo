@@ -9,7 +9,7 @@ namespace GOProject
 };
 
 void cvEqualizeHist(const CvArr* srcarr, CvArr* dstarr, CvMat* mask);
-void equalizeHist(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _mask = cv::noArray());
+void equalizeHist(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _mask);
 // Finds the intersection of two lines, or returns false.
 // The lines are defined by (o1, p1) and (o2, p2).
 bool intersection(cv::Point2f o1, cv::Point2f p1, cv::Point2f o2, cv::Point2f p2, cv::Point2f &r);
