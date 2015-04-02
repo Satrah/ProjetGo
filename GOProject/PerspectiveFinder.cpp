@@ -15,8 +15,7 @@ bool PerspectiveFinder::HomographyCalibrate()
 	const float MAXIMUM_HORIZONTAL_DEVIATION = 0.1f;
 	const float MAXIMUM_VERTICAL_DEVIATION = 0.5f;
 	const unsigned int VERTICAL_LINES_FIRST_BOTTOM = unsigned int(0.8f * height()); // Vertical lines start in the 20% bottom of the image
-	const unsigned int VERTICAL_LINES_LAST_TOP = unsigned int(0.5f * height());
-	const float SHIFT_CORNERS_OFFSET = 0.2f;
+	const unsigned int VERTICAL_LINES_LAST_TOP = unsigned int(0.55f * height());
 
 	/// 1- Process image with Canny
 	Image<uchar> cannyImg;
@@ -132,8 +131,8 @@ bool PerspectiveFinder::HomographyCalibrate()
 			_pointsOrig.erase(_pointsOrig.begin(), _pointsOrig.begin() + 4);
 			_pointsDest.erase(_pointsDest.begin(), _pointsDest.begin() + 4);
 		}
-		float coordMin = height() * SHIFT_CORNERS_OFFSET;
-		float coordMax = height() - coordMin;
+		float coordMin = _cornersOffset;
+		float coordMax = height() - _cornersOffset;
 		_pointsOrig.push_back(Point2f(coordMin, coordMin));
 		_pointsDest.push_back(Point2f(rightLine[2], rightLine[3]));
 		_pointsOrig.push_back(Point2f(coordMin, coordMax));
@@ -143,6 +142,8 @@ bool PerspectiveFinder::HomographyCalibrate()
 		_pointsOrig.push_back(Point2f(coordMax, coordMax));
 		_pointsDest.push_back(Point2f(leftLine[0], leftLine[1]));
 	}
+	circle(cdst, Point(leftLine[2], leftLine[3]), 10, Scalar(100, 0, 0), 10);
+	circle(cdst, Point(rightLine[2], rightLine[3]), 10, Scalar(100, 0, 0), 10);
 	_homography = findHomography(_pointsDest, _pointsOrig, CV_RANSAC);
 	imshow("Hough Lines", cdst);
 	return true;

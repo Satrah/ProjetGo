@@ -35,7 +35,7 @@ namespace GOProject
 		void ClearBadLines();
 		void DisplayTransformedImage() const;
 		// Rectangle detection
-		void DetectSquareForms();
+		void DetectSquareForms(int minX, int maxX, int minY, int maxY);
 		void DetectBoard1();
 		void DetectBoard2();
 		void TrackFeaturesInsideBoard();

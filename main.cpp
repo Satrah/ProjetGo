@@ -31,8 +31,9 @@ void TestHoughLinesFromWebcam()
 	Mat webcam;
 	Image<uchar> webcamGrey;
 	Mat harrisCorners;
+	int cornersOffset = 50;
 	GOProject::ImageLoader loader;
-	GOProject::PerspectiveFinder perspectiveFinder;
+	GOProject::PerspectiveFinder perspectiveFinder(cornersOffset);
 	GOProject::AlGo go;
 	int consecutiveSuccess = 0;
 	// Calibrate
@@ -50,11 +51,14 @@ void TestHoughLinesFromWebcam()
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
 		perspectiveFinder.Load(webcamGrey);
-		perspectiveFinder.HomographyCalibrate();
+		if (!perspectiveFinder.HomographyCalibrate())
+		{
+			consecutiveSuccess = 0;
+			continue;
+		}
 		perspectiveFinder.HomographyTransform();
 		loader.Load(perspectiveFinder);
-		loader.DetectSquareForms();
-		loader.DebugDisplaySquares();
+		loader.DetectSquareForms(cornersOffset, webcamGrey.height() - cornersOffset, cornersOffset, webcamGrey.height() - cornersOffset);
 		loader.DetectBoard2();
 
 		loader.DetectIntersect();
@@ -62,7 +66,6 @@ void TestHoughLinesFromWebcam()
 		{
 			/// READ FINISHED
 			loader.ApplyHomography();
-			imshow("Transformed Image", loader.GetImage());
 			++consecutiveSuccess;
 		}
 		else

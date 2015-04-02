@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <math.h>       /* fmod */
+#include <set>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -12,14 +13,40 @@ using namespace cv;
 using namespace GOProject;
 
 
-void ImageLoader::DetectSquareForms()
+void ImageLoader::DetectSquareForms(int minX, int maxX, int minY, int maxY)
 {
 	Mat threshold_output;
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 
-	/// Detect edges using Threshold
-	threshold(GetImage(), threshold_output, 100, 255, THRESH_BINARY);
+	/// Detect edges using Threshold - but what value should we take for this ?
+	// We need a different value for different image areas
+	int rowSize = (maxY - minY) / 3;
+	int colSize = (maxX - minX) / 3;
+	threshold_output = GetImage().clone();
+	for (int row = 0; row < GetImage().height(); row += rowSize)
+		for (int col = 0; col < GetImage().width(); col += colSize)
+		{
+			_Uint32t fromY = row;
+			_Uint32t lastY = std::min(row + rowSize, GetImage().height());
+			_Uint32t fromX = col;
+			_Uint32t lastX = std::min(col + colSize, GetImage().width());
+			vector<uchar> colors;
+			for (_Uint32t x = fromX; x < lastX; ++x)
+				for (_Uint32t y = fromY; y < lastY; ++y)
+					colors.push_back(GetImage().at<uchar>(y, x));
+			sort(colors.begin(), colors.end());
+			uchar tresholdValue = colors[colors.size() * 2 / 10];
+			for (_Uint32t x = fromX; x < lastX; ++x)
+				for (_Uint32t y = fromY; y < lastY; ++y)
+				{
+					if (GetImage().at<uchar>(y, x) > tresholdValue)
+						threshold_output.at<uchar>(y, x) = 255;
+					else
+						threshold_output.at<uchar>(y, x) = 0;
+				}
+		}
+	//imshow("t", threshold_output);
 	/// Find contours
 	findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
@@ -30,7 +57,7 @@ void ImageLoader::DetectSquareForms()
 	// Find at the same time the square median area
 	vector<double> squareAreas;
 	vector<double> squareOrientation;
-	for (int i = 0; i < contours.size(); i++)
+	for (_Uint32t i = 0; i < contours.size(); i++)
 	{
 		RotatedRect rec = minAreaRect(Mat(contours[i]));
 		// Filter out too small rectangles
@@ -49,7 +76,7 @@ void ImageLoader::DetectSquareForms()
 	// TODO: Do that in a linear time
 	sort(squareAreas.begin(), squareAreas.end());
 	double median = squareAreas[squareAreas.size() / 2];
-	for (int i = 0; i < _detectedRectangles.size();)
+	for (_Uint32t i = 0; i < _detectedRectangles.size();)
 	{
 		double area = _detectedRectangles[i].size.area();
 		if (fabs((area - median) / median) > 0.2f)
