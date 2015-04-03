@@ -64,6 +64,7 @@ cv::Mat CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject
 			consecutiveSuccess = 0;
 		//imshow("HomographyTransformed", perspectiveFinder);
 	}
+	printf("Calibrate successful\n");
 	return perspectiveFinder.GetHomography().inv() * loader.GetHomography().inv();
 }
 
@@ -75,17 +76,13 @@ void GOGameLaunch()
 	GOProject::ImageLoader loader;
 	GOProject::PerspectiveFinder perspectiveFinder(cornersOffset);
 	GOProject::AlGo go;
-	go.charge(loader);
 	cv::Mat homographyInv = CalibrateGame(perspectiveFinder, loader);
-	printf("Got homography %u\n", homographyInv.empty());
+	go.charge(loader);
 	while (true)
 	{
 		char k = waitKey(50);
 		if (k == 'q' || homographyInv.empty())
-		{
-			printf("Got Q\n");
 			return;
-		}
 		if (k == 'c')
 		{
 			homographyInv = CalibrateGame(perspectiveFinder, loader);
@@ -107,18 +104,19 @@ void GOGameLaunch()
 		go.refresh(loader);
 		go.affichePlateau();
 		int h = webcam.size().height;
-		Image<Vec4b> rendered = Mat::zeros(h, h, CV_8UC4);
+		int w = webcam.size().width;
+		Image<Vec4b> rendered = Mat::zeros(h, w, CV_8UC4);
 		if (go.render(rendered))
 		{
 			cv::Mat output = rendered.clone();
 
 			// 3- Apply the inversed homography to display augmented reality go !
 			warpPerspective(rendered, output, homographyInv, rendered.size());
-			for (int x = 0; x < h; ++x)
+			for (int x = 0; x < w; ++x)
 			for (int y = 0; y < h; ++y)
 			{
-				Vec3b& p = webcam.at<Vec3b>(x, y);
-				Vec4b& renderedPoint = output.at<Vec4b>(x, y);
+				Vec3b& p = webcam.at<Vec3b>(y, x);
+				Vec4b& renderedPoint = output.at<Vec4b>(y, x);
 				if (renderedPoint[3] > 0)
 					for (int i = 0; i < 3; ++i)
 						p[i] = (p[i] * (255 - renderedPoint[3]) + renderedPoint[i] * renderedPoint[3]) / 255;
