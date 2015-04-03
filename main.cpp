@@ -13,27 +13,27 @@ using namespace GOProject;
 using namespace std;
 using namespace cv;
 
+VideoCapture cap;
 void GOGameLaunch();
 
 int main()
 {
+	cap.open(0);
 	GOGameLaunch();
     return 0;
 }
 
-void CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject::ImageLoader& loader)
+cv::Mat CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject::ImageLoader& loader)
 {
-	VideoCapture cap; // Will capture 8UC3
-	cap.open(0);
 	Mat webcam;
 	Image<uchar> webcamGrey;
 	int consecutiveSuccess = 0;
 	// Calibrate
-	while (consecutiveSuccess < 35)
+	while (consecutiveSuccess < 20)
 	{
 		char k = waitKey(10);
 		if (k == 'q')
-			return;
+			return cv::Mat();
 		if (k == 'p') // Pause
 			continue;
 		cap >> webcam;
@@ -64,26 +64,33 @@ void CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject::I
 			consecutiveSuccess = 0;
 		//imshow("HomographyTransformed", perspectiveFinder);
 	}
+	return perspectiveFinder.GetHomography().inv() * loader.GetHomography().inv();
 }
 
 void GOGameLaunch()
 {
-	VideoCapture cap; // Will capture 8UC3
-	cap.open(0);
 	Mat webcam;
 	Image<uchar> webcamGrey;
 	int cornersOffset = 50;
 	GOProject::ImageLoader loader;
 	GOProject::PerspectiveFinder perspectiveFinder(cornersOffset);
 	GOProject::AlGo go;
-	CalibrateGame(perspectiveFinder, loader);
 	go.charge(loader);
-	cv::Mat homographyInv = perspectiveFinder.GetHomography().inv() * loader.GetHomography().inv();
+	cv::Mat homographyInv = CalibrateGame(perspectiveFinder, loader);
+	printf("Got homography %u\n", homographyInv.empty());
 	while (true)
 	{
 		char k = waitKey(50);
-		if (k == 'q')
+		if (k == 'q' || homographyInv.empty())
+		{
+			printf("Got Q\n");
 			return;
+		}
+		if (k == 'c')
+		{
+			homographyInv = CalibrateGame(perspectiveFinder, loader);
+			continue;
+		}
 		if (k == 'p') // Pause
 			continue;
 		cap >> webcam;
