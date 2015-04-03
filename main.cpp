@@ -23,6 +23,17 @@ int main()
     return 0;
 }
 
+void FixWebcam(cv::Mat& webcam /*8UC3*/)
+{
+	for (int x = 0; x < webcam.size().width / 2; ++x)
+	for (int y = 0; y < webcam.size().height; ++y)
+	{
+		Vec3b tmp = webcam.at<Vec3b>(y, x);
+		webcam.at<Vec3b>(y, x) = webcam.at<Vec3b>(y, webcam.size().width - x - 1);
+		webcam.at<Vec3b>(y, webcam.size().width - x - 1) = tmp;
+	}
+
+}
 cv::Mat CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject::ImageLoader& loader)
 {
 	Mat webcam;
@@ -39,7 +50,7 @@ cv::Mat CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject
 		cap >> webcam;
 		if (webcam.empty())
 			continue;
-
+		FixWebcam(webcam);
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 
 		perspectiveFinder.Load(webcamGrey);
@@ -93,6 +104,7 @@ void GOGameLaunch()
 		cap >> webcam;
 		if (webcam.empty())
 			continue;
+		FixWebcam(webcam);
 		cvtColor(webcam, webcamGrey, CV_BGR2GRAY);
 		// 1- Apply homographies to get the board points at specific pixels
 		perspectiveFinder.Load(webcamGrey);
@@ -102,6 +114,7 @@ void GOGameLaunch()
 
 		// 2- Handle the data
 		go.refresh(loader);
+		go.computeAreas();
 		go.affichePlateau();
 		int h = webcam.size().height;
 		int w = webcam.size().width;

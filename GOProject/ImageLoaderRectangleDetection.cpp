@@ -344,7 +344,7 @@ bool ImageLoader::FindHomographyWithDetectedRectangles()
 				coordY >= 0 && coordY < _nbCases)
 			{
 				points1.push_back(Point2f(rectangle.center));
-				points2.push_back(Point2f(distCasesPixels / 2 + (_nbCases - coordX) * distCasesPixels, distCasesPixels / 2 + (_nbCases - coordY) * distCasesPixels));
+				points2.push_back(Point2f(distCasesPixels / 2 + (coordX + 1) * distCasesPixels, distCasesPixels / 2 + (_nbCases - coordY) * distCasesPixels));
 			}
 		}
 	}
