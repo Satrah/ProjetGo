@@ -105,9 +105,12 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 		for (int x = 0; x < w; ++x)
 		for (int y = 0; y < w; ++y)
 		{
-			int area = _areas[y*w + x] * 255 * 255 / (w * w);
-			if (area)
-				circle(out, Point((x+1) * _pxlPerCase, (y+1) * _pxlPerCase), _pxlPerCase / 3, Scalar(area % 255, (area / 255) % 255, (area / 255 / 255) % 255, 150), 10);
+			int area = _areas[y*w + x];
+			if (area && _ownerByArea[area] != (CASE_NOIRE | CASE_BLANCHE | CASE_VIDE))
+			{
+				Scalar color = _ownerByArea[area] & CASE_NOIRE ? Scalar(0, 0, 0, 150) : Scalar(255, 255, 255, 150);
+				circle(out, Point((x + 1) * _pxlPerCase, (y + 1) * _pxlPerCase), _pxlPerCase / 3, color, 10);
+			}
 		}
 	}
 	return true;
@@ -209,6 +212,33 @@ void AlGo::computeAreas()
 					changed = true;
 					caseArea = _areas[w*y2 + x2];
 				}
+			}
+		}
+	}
+}
+void AlGo::computeBWAreas()
+{
+	_ownerByArea.clear();
+	int w = _taillePlateau + 1;
+	for (int x = 0; x < w; ++x)
+	for (int y = 0; y < w; ++y)
+	{
+		_ownerByArea[_areas[y*w + x]] = CASE_VIDE;
+	}
+	for (int x = 0; x < w; ++x)
+	for (int y = 0; y < w; ++y)
+	{
+		int& caseArea = _areas[w*y + x];
+		if (!caseArea) // =0 s'il y a un pion ici
+			continue;
+		for (int i = -1; i <= 1; ++i)
+		for (int j = -1; j <= 1; ++j)
+		{
+			int x2 = x + i;
+			int y2 = y + j;
+			if (x2 < w && x2 >= 0 && y2 < w && y2 >= 0)
+			{
+				_ownerByArea[caseArea] = EtatCase(_ownerByArea[caseArea] | GetCase(x2, y2));
 			}
 		}
 	}

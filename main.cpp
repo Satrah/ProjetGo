@@ -115,6 +115,7 @@ void GOGameLaunch()
 		// 2- Handle the data
 		go.refresh(loader);
 		go.computeAreas();
+		go.computeBWAreas();
 		go.affichePlateau();
 		int h = webcam.size().height;
 		int w = webcam.size().width;
