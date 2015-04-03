@@ -50,17 +50,23 @@ void AlGo::refresh(ImageLoader const& loader)
 			std::vector<uchar> colors;
 			float localAvg = 0.0f;
 			const static int SQUARE_SIZE = 15;
+			for (int i = -5; i < 5; ++i)
+			for (int j = -5; j < 5; ++j)
+			{
+				localAvg += loader.GetImage()(ici.x + i, ici.y + j);
+				colors.push_back(loader.GetImage()(ici.x + i, ici.y + j));
+			}
 			for (int i = -SQUARE_SIZE; i < SQUARE_SIZE; ++i)
 			for (int j = -SQUARE_SIZE; j < SQUARE_SIZE; ++j)
 			{
 				localAvg += loader.GetImage()(ici.x + i, ici.y + j);
 				colors.push_back(loader.GetImage()(ici.x + i, ici.y + j));
 			}
-			localAvg /= SQUARE_SIZE*SQUARE_SIZE*4;
+			localAvg /= colors.size();
 			std::sort(colors.begin(), colors.end());
-			int firstDecile = colors[colors.size() / 30];
+			int firstDecile = colors[colors.size() / 40];
 			int median = colors[colors.size() / 2];
-			if (localAvg / avgBrightness > 1.5f)
+			if (localAvg / avgBrightness > 1.6f)
 				currCase = CASE_BLANCHE;
 			else if (median - firstDecile > 50)
 				currCase = CASE_VIDE;
@@ -161,8 +167,8 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 			scoreB /= scoreW;
 			scoreW = 1;
 		}
-		line(out, Point(_pxlPerCase / 2, _taillePlateau*_pxlPerCase), Point(_pxlPerCase / 2, (1 - scoreW)*(_taillePlateau - 1)*_pxlPerCase), Scalar(255, 255, 255, 150), _pxlPerCase / 2);
-		line(out, Point((_taillePlateau + 0.5)*_pxlPerCase, _taillePlateau*_pxlPerCase), Point((_taillePlateau + 0.5)*_pxlPerCase, (1 - scoreB)*(_taillePlateau - 1)*_pxlPerCase), Scalar(0, 0, 0, 150), _pxlPerCase / 2);
+		line(out, Point(0, _taillePlateau*_pxlPerCase), Point(0, _pxlPerCase + (1 - scoreW)*(_taillePlateau - 1)*_pxlPerCase), Scalar(255, 255, 255, 150), _pxlPerCase / 2);
+		line(out, Point((_taillePlateau + 1)*_pxlPerCase, _taillePlateau*_pxlPerCase), Point((_taillePlateau + 1)*_pxlPerCase, _pxlPerCase + (1 - scoreB)*(_taillePlateau - 1)*_pxlPerCase), Scalar(0, 0, 0, 150), _pxlPerCase / 4);
 	}
 	return true;
 }
