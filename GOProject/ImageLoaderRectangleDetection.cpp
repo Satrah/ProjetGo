@@ -398,5 +398,4 @@ void ImageLoader::DetectIntersect()
 		ind = i.first;
 	}
 	_nbCases = ind;
-	printf("%u cases\n", _nbCases);
 }

@@ -95,11 +95,12 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 {
 	int w = _taillePlateau + 1;
 	// Draw lines
+	/*
 	for (int x = 0; x < _taillePlateau; ++x)
 	{
 		line(out, Point((x + 1)*_pxlPerCase, _pxlPerCase), Point((x + 1)*_pxlPerCase, _taillePlateau*_pxlPerCase), Scalar(0, 0, 0, 255), 2);
 		line(out, Point(_pxlPerCase, (x + 1)*_pxlPerCase), Point(_taillePlateau*_pxlPerCase, (x + 1)*_pxlPerCase), Scalar(0, 0, 0, 255), 2);
-	}
+	}*/
 	if (_areas)
 	{
 		float scoreB = 0;
@@ -134,8 +135,8 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 			scoreB /= scoreW;
 			scoreW = 1;
 		}
-		line(out, Point(_pxlPerCase / 2, _taillePlateau*_pxlPerCase), Point(_pxlPerCase / 2, (1 - scoreW)*_taillePlateau*_pxlPerCase), Scalar(255, 255, 255, 150), _pxlPerCase / 2);
-		line(out, Point((_taillePlateau + 0.5)*_pxlPerCase, _taillePlateau*_pxlPerCase), Point((_taillePlateau + 0.5)*_pxlPerCase, (1 - scoreB)*_taillePlateau*_pxlPerCase), Scalar(0, 0, 0, 150), _pxlPerCase / 2);
+		line(out, Point(_pxlPerCase / 2, _taillePlateau*_pxlPerCase), Point(_pxlPerCase / 2, (1 - scoreW)*(_taillePlateau - 1)*_pxlPerCase), Scalar(255, 255, 255, 150), _pxlPerCase / 2);
+		line(out, Point((_taillePlateau + 0.5)*_pxlPerCase, _taillePlateau*_pxlPerCase), Point((_taillePlateau + 0.5)*_pxlPerCase, (1 - scoreB)*(_taillePlateau - 1)*_pxlPerCase), Scalar(0, 0, 0, 150), _pxlPerCase / 2);
 	}
 	return true;
 }
