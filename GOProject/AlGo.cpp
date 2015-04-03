@@ -30,10 +30,6 @@ void AlGo::refresh(ImageLoader const& loader)
 		for (int j = 0; j < _taillePlateau; ++j)
 		{
 			Point ici = Point(((i+1)*imageBlurred.height()) / (_taillePlateau + 1), ((j+1)*imageBlurred.height()) / (_taillePlateau + 1));
-			/*
-			printf("%3d ", J(ici));
-			if (j + 1 == _taillePlateau)
-				printf("\n");*/
 			float sum = 0;
 			for (int k = 0; k < _memory.size(); ++k)
 				if (!_memory[k].empty())
@@ -97,17 +93,27 @@ void AlGo::affichePlateau()
 
 bool AlGo::render(Image<cv::Vec4b>& out)
 {
+	int w = _taillePlateau + 1;
 	// Draw lines
 	for (int x = 0; x < _taillePlateau; ++x)
 	{
 		line(out, Point((x + 1)*_pxlPerCase, _pxlPerCase), Point((x + 1)*_pxlPerCase, _taillePlateau*_pxlPerCase), Scalar(0, 0, 0, 255), 2);
 		line(out, Point(_pxlPerCase, (x + 1)*_pxlPerCase), Point(_taillePlateau*_pxlPerCase, (x + 1)*_pxlPerCase), Scalar(0, 0, 0, 255), 2);
 	}
-	circle(out, Point(3 * _pxlPerCase, 3 * _pxlPerCase), _pxlPerCase/2, Scalar(153, 76, 42, 255), 10);
+	if (_areas)
+	{
+		for (int x = 0; x < w; ++x)
+		for (int y = 0; y < w; ++y)
+		{
+			int area = _areas[y*w + x] * 255 * 255 / (w * w);
+			if (area)
+				circle(out, Point((x+1) * _pxlPerCase, (y+1) * _pxlPerCase), _pxlPerCase / 3, Scalar(area % 255, (area / 255) % 255, (area / 255 / 255) % 255, 150), 10);
+		}
+	}
 	return true;
 }
 
-int AlGo::_calculLibAux(int i, int j, std::map<BoardPosition, bool> calcule)
+int AlGo::_calculLibAux(int i, int j, std::map<BoardPosition, bool>& calcule)
 {
 	BoardPosition ici = BoardPosition(i, j);
 	EtatCase couleur = _plateau[ici];
@@ -160,7 +166,7 @@ void AlGo::calculLibertes()
 			BoardPosition ici = BoardPosition(i, j);
 			EtatCase couleur = _plateau[ici];
 			_libertes[ici] = 0;
-			if (couleur = CASE_VIDE)
+			if (couleur == CASE_VIDE)
 				continue;
 			if (_plateau[BoardPosition(i - 1, j)] == CASE_VIDE)
 				_libertes[ici]++;
@@ -171,4 +177,39 @@ void AlGo::calculLibertes()
 		{
 			_libertes[BoardPosition(i, j)] = _calculLibAux(i, j, calcule);
 		}
+}
+
+void AlGo::computeAreas()
+{
+	if (_areas)
+		delete[] _areas;
+	int w = _taillePlateau + 1;
+	int size = w*w;
+	_areas = new int[size];
+	for (int x = 0; x < w; ++x)
+		for (int y = 0; y < w; ++y)
+			_areas[w*y + x] = GetCase(x, y) == CASE_VIDE ? w*x + y + 1 : 0;
+	bool changed = true;
+	while (changed)
+	{
+		changed = false;
+		for (int x = 0; x < w; ++x)
+		for (int y = 0; y < w; ++y)
+		{
+			int& caseArea = _areas[w*y+x];
+			if (!caseArea) // =0 s'il y a un pion ici
+				continue;
+			for (int i = -1; i <= 1; ++i)
+			for (int j = -1; j <= 1; ++j)
+			{
+				int x2 = x + i;
+				int y2 = y + j;
+				if (x2 < w && x2 >= 0 && y2 < w && y2 >= 0 && _areas[w*y2 + x2] > caseArea)
+				{
+					changed = true;
+					caseArea = _areas[w*y2 + x2];
+				}
+			}
+		}
+	}
 }
