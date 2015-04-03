@@ -102,16 +102,40 @@ bool AlGo::render(Image<cv::Vec4b>& out)
 	}
 	if (_areas)
 	{
+		float scoreB = 0;
+		float scoreW = 0;
 		for (int x = 0; x < w; ++x)
 		for (int y = 0; y < w; ++y)
 		{
 			int area = _areas[y*w + x];
 			if (area && _ownerByArea[area] != (CASE_NOIRE | CASE_BLANCHE | CASE_VIDE))
 			{
-				Scalar color = _ownerByArea[area] & CASE_NOIRE ? Scalar(0, 0, 0, 150) : Scalar(255, 255, 255, 150);
+				Scalar color;
+				if (_ownerByArea[area] & CASE_NOIRE)
+				{
+					color = Scalar(0, 0, 0, 150);
+					scoreB++;
+				}
+				else
+				{
+					color = Scalar(255, 255, 255, 150);
+					scoreW++;
+				}
 				circle(out, Point((x + 1) * _pxlPerCase, (y + 1) * _pxlPerCase), _pxlPerCase / 3, color, 10);
 			}
 		}
+		if (scoreB > scoreW)
+		{
+			scoreW /= scoreB;
+			scoreB = 1;
+		}
+		if (scoreW > scoreB)
+		{
+			scoreB /= scoreW;
+			scoreW = 1;
+		}
+		line(out, Point(_pxlPerCase / 2, _taillePlateau*_pxlPerCase), Point(_pxlPerCase / 2, (1 - scoreW)*_taillePlateau*_pxlPerCase), Scalar(255, 255, 255, 150), _pxlPerCase / 2);
+		line(out, Point((_taillePlateau + 0.5)*_pxlPerCase, _taillePlateau*_pxlPerCase), Point((_taillePlateau + 0.5)*_pxlPerCase, (1 - scoreB)*_taillePlateau*_pxlPerCase), Scalar(0, 0, 0, 150), _pxlPerCase / 2);
 	}
 	return true;
 }
