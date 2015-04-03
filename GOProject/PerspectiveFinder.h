@@ -11,6 +11,7 @@ namespace GOProject
 		bool HomographyCalibrate();
 		void HomographyTransform();
 		cv::Mat GetHomography() const { return _homography; }
+		int GetCornersOffset() const { return _cornersOffset; }
 	protected:
 		int _memoryPoints;
 		std::vector<cv::Point2f> _pointsOrig;
