@@ -13,26 +13,23 @@ using namespace GOProject;
 using namespace std;
 using namespace cv;
 
-void TestHoughLinesFromWebcam();
+void GOGameLaunch();
 
 int main()
 {
-	TestHoughLinesFromWebcam();
+	GOGameLaunch();
     return 0;
 }
 
-void TestHoughLinesFromWebcam()
+void CalibrateGame(GOProject::PerspectiveFinder& perspectiveFinder, GOProject::ImageLoader& loader)
 {
 	VideoCapture cap; // Will capture 8UC3
 	cap.open(0);
 	Mat webcam;
 	Image<uchar> webcamGrey;
-	int cornersOffset = 50;
-	GOProject::ImageLoader loader;
-	GOProject::PerspectiveFinder perspectiveFinder(cornersOffset);
 	int consecutiveSuccess = 0;
 	// Calibrate
-	while (consecutiveSuccess < 5)
+	while (consecutiveSuccess < 35)
 	{
 		char k = waitKey(10);
 		if (k == 'q')
@@ -53,7 +50,7 @@ void TestHoughLinesFromWebcam()
 		}
 		perspectiveFinder.HomographyTransform();
 		loader.Load(perspectiveFinder);
-		loader.DetectSquareForms(cornersOffset, webcamGrey.height() - cornersOffset, cornersOffset, webcamGrey.height() - cornersOffset);
+		loader.DetectSquareForms(perspectiveFinder.GetCornersOffset(), webcamGrey.height() - perspectiveFinder.GetCornersOffset(), perspectiveFinder.GetCornersOffset(), webcamGrey.height() - perspectiveFinder.GetCornersOffset());
 		loader.DetectBoard2();
 
 		loader.DetectIntersect();
@@ -67,7 +64,19 @@ void TestHoughLinesFromWebcam()
 			consecutiveSuccess = 0;
 		//imshow("HomographyTransformed", perspectiveFinder);
 	}
+}
+
+void GOGameLaunch()
+{
+	VideoCapture cap; // Will capture 8UC3
+	cap.open(0);
+	Mat webcam;
+	Image<uchar> webcamGrey;
+	int cornersOffset = 50;
+	GOProject::ImageLoader loader;
+	GOProject::PerspectiveFinder perspectiveFinder(cornersOffset);
 	GOProject::AlGo go;
+	CalibrateGame(perspectiveFinder, loader);
 	go.charge(loader);
 	cv::Mat homographyInv = perspectiveFinder.GetHomography().inv() * loader.GetHomography().inv();
 	while (true)
