@@ -16,9 +16,13 @@ void AlGo::charge(ImageLoader const& loader)
 }
 void AlGo::refresh(ImageLoader const& loader)
 {
+	float avgBrightness = 0.0f;
+	for (uchar* i = loader.GetImage().datastart; i < loader.GetImage().dataend; ++i)
+		avgBrightness += *i;
+	avgBrightness /= loader.GetImage().size().area();
 	Image<float> harrisCorners;
 	//Image<uchar> K;
-	cornerHarris(loader.GetImage(), harrisCorners, 17, 7, 0.04);
+	cornerHarris(loader.GetImage(), harrisCorners, 7, 9, 0.2);
 	//GaussianBlur(J, J, Size(13, 13), 5, 5);
 	Image<uchar> imageBlurred;
 	GaussianBlur(loader.GetImage(), imageBlurred, Size(7, 7), 4, 4);
@@ -29,18 +33,40 @@ void AlGo::refresh(ImageLoader const& loader)
 	for (int i = 0; i < _taillePlateau; ++i)
 		for (int j = 0; j < _taillePlateau; ++j)
 		{
-			Point ici = Point(((i+1)*imageBlurred.height()) / (_taillePlateau + 1), ((j+1)*imageBlurred.height()) / (_taillePlateau + 1));
+			Point ici = Point(((i + 1)*imageBlurred.height()) / (_taillePlateau + 1), ((j + 1)*imageBlurred.height()) / (_taillePlateau + 1));
+			EtatCase& currCase = _plateau[BoardPosition(i, j)];
+			/*
 			float sum = 0;
 			for (int k = 0; k < _memory.size(); ++k)
 				if (!_memory[k].empty())
 					sum += _memory[k](ici);
 			sum /= _memory.size();
-			EtatCase& currCase = _plateau[BoardPosition(i, j)];
 			if (sum > 1.0f)
 				currCase = CASE_VIDE;
 			else if (imageBlurred(ici) > 100)
 				currCase = CASE_BLANCHE;
 			else 
+				currCase = CASE_NOIRE;*/
+			std::vector<uchar> colors;
+			float localAvg = 0.0f;
+			const static int SQUARE_SIZE = 15;
+			for (int i = -SQUARE_SIZE; i < SQUARE_SIZE; ++i)
+			for (int j = -SQUARE_SIZE; j < SQUARE_SIZE; ++j)
+			{
+				localAvg += loader.GetImage()(ici.x + i, ici.y + j);
+				colors.push_back(loader.GetImage()(ici.x + i, ici.y + j));
+			}
+			localAvg /= SQUARE_SIZE*SQUARE_SIZE*4;
+			std::sort(colors.begin(), colors.end());
+			int firstDecile = colors[colors.size() / 30];
+			int median = colors[colors.size() / 2];
+			if (localAvg / avgBrightness > 1.5f)
+				currCase = CASE_BLANCHE;
+			else if (median - firstDecile > 50)
+				currCase = CASE_VIDE;
+			else if (imageBlurred(ici) > 100)
+				currCase = CASE_BLANCHE;
+			else
 				currCase = CASE_NOIRE;
 			
 			switch (currCase)
